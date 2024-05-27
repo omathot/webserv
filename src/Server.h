@@ -17,6 +17,8 @@ public:
 
 	Server	&operator=(const Server &src);
 
+	void	setAddr(void);
+
 };
 
 #endif
