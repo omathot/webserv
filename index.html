@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple HTML Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .post {
+            margin-bottom: 20px;
+        }
+        .link {
+            color: blue;
+            text-decoration: none;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="post">
+        <h1>My Blog Post</h1>
+        <p>Welcome to my blog! This is my first post. I'm excited to share my thoughts and ideas with you. Stay tuned for more updates!</p>
+    </div>
+
+    <div class="link-section">
+        <p>Check out my <a href="https://example.com" class="link">favorite website</a> for more information.</p>
+    </div>
+
+
+    <div class="form-section">
+        <h2>Leave a Comment</h2>
+        <textarea id="userInput" rows="4" cols="50" placeholder="Write your comment here..."></textarea>
+        <br>
+        <button onclick="sendData()">Submit</button>
+    </div>
+
+    <script>
+        function sendData() {
+            const userInput = document.getElementById('userInput').value;
+            const apiUrl = 'https://example.com/api/post'; // Replace with your actual API endpoint
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ comment: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Success: ' + JSON.stringify(data));
+            })
+            .catch((error) => {
+                alert('Error: ' + error);
+            });
+        }
+    </script>
+
+</body>
+</html>
