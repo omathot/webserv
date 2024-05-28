@@ -32,18 +32,27 @@ Parser::~Parser()
 
 void Parser::webserver(char **argv)
 {
-    std::string  file = argv[1];
+    std::ifstream fileToRead(argv[1]); //read from the text file 
     std::string  buffer; 
 
-    std::ifstream fileToRead(file); //read from the text file 
     if (!fileToRead) //if the reading fails
     {
         std::cerr << "Error: Unable to open the input file." << std::endl;
         return;
-    }
+    }    
     while (getline(fileToRead, buffer)) //read all the file lines and write into buffer.
     {
-        std::cout << buffer << std::endl;
+        size_t found = 0;
+        while(buffer.find("server_name") != std::string::npos)
+        {
+            // std::cout << "Ciao" << std::endl;
+            this->m_serverName.insert(found, buffer);
+            // found += buffer.length();
+        }
+        std::cout << this->m_serverName << std::endl;
+        // if ())//, found))
+        // {
+        // }
     }
     fileToRead.close();
 }

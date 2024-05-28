@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sys/socket.h>
 #include <vector>
 
 #define CYAN	"\033[36m"
