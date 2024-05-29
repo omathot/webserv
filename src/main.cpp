@@ -2,9 +2,12 @@
 
 int main(int argc, char **argv)
 {
-    Parser parse;
-
     if (argc == 2)
-        parse.webserver(argv);
+    {
+        Parser parse;
+
+        webserver(argv, parse);
+        
+    }
     return (0);
 }

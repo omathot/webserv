@@ -30,29 +30,95 @@ Parser::~Parser()
     std::cout << RED << "Destructor Parser called." << RESET << std::endl;
 }
 
-void Parser::webserver(char **argv)
+const std::string& Parser::getServerName()
 {
-    std::ifstream fileToRead(argv[1]); //read from the text file 
-    std::string  buffer; 
+    return (this->m_serverName);
+}
 
-    if (!fileToRead) //if the reading fails
+const std::string& Parser::getLocalHost()
+{
+    return (this->m_localHost);
+}
+
+const std::string& Parser::getRoot()
+{
+    return (this->m_root);
+}
+
+const std::string& Parser::getMainPage()
+{
+    return (this->m_mainPage);
+}
+
+void  Parser::setServerName(const std::string &t_serverName)
+{
+    this->m_serverName = t_serverName;
+}
+void  Parser::setLocalHost(const std::string &t_localHost)
+{
+    this->m_localHost = t_localHost;
+}
+void  Parser::setRoot(const std::string &t_root)
+{
+    this->m_root = t_root;
+}
+void  Parser::setMainPage(const std::string &t_mainPage)
+{
+    this->m_mainPage = t_mainPage;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void webserver(char **argv, Parser &parser)
+{
+    std::ifstream fileToRead(argv[1]); //read from the text file
+    std::string  buffer;
+
+    if (!fileToRead.good()) //if the reading fails
     {
         std::cerr << "Error: Unable to open the input file." << std::endl;
         return;
-    }    
-    while (getline(fileToRead, buffer)) //read all the file lines and write into buffer.
+    }
+    while (fileToRead) //read all the file lines and write into buffer.
     {
-        size_t found = 0;
-        while(buffer.find("server_name") != std::string::npos)
-        {
-            // std::cout << "Ciao" << std::endl;
-            this->m_serverName.insert(found, buffer);
-            // found += buffer.length();
-        }
-        std::cout << this->m_serverName << std::endl;
-        // if ())//, found))
-        // {
-        // }
+        std::getline(fileToRead, buffer);
+
+        parser.setServerName(parser.searchValue(fileToRead, "server_name", buffer));
+        // parser.setLocalHost(parser.searchValue(fileToRead, "listen", buffer));
+        // parser.setRoot(parser.searchValue(fileToRead, "root", buffer));
     }
     fileToRead.close();
+}
+
+const std::string Parser::searchValue(std::ifstream& fileToRead, std::string valueToParse, std::string buffer)
+{
+    // (void) valueToParse;
+    (void) fileToRead;
+    std::string         word;
+    std::string value;
+
+    std::istringstream  stream(buffer);
+    while (std::getline(stream, word, ' '))
+    {
+        if (word == valueToParse)
+        {
+            getline(stream, word, ' ');
+            stream >> std::ws;
+        }
+        std::cout << word << '\n';
+    }  
+    return (word);
 }
