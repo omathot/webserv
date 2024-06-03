@@ -67,22 +67,7 @@ void  Parser::setMainPage(const std::string &t_mainPage)
     this->m_mainPage = t_mainPage;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void webserver(char **argv, Parser &parser)
+void Parser::webserver(char **argv, Parser &parser)
 {
     std::ifstream fileToRead(argv[1]); //read from the text file
     std::string  buffer;
@@ -92,33 +77,47 @@ void webserver(char **argv, Parser &parser)
         std::cerr << "Error: Unable to open the input file." << std::endl;
         return;
     }
-    while (fileToRead) //read all the file lines and write into buffer.
+    howManyServer(buffer);
+    while (std::getline(fileToRead, buffer, ' ')) //read all the file lines and write into buffer.
     {
-        std::getline(fileToRead, buffer);
-
-        parser.setServerName(parser.searchValue(fileToRead, "server_name", buffer));
-        // parser.setLocalHost(parser.searchValue(fileToRead, "listen", buffer));
-        // parser.setRoot(parser.searchValue(fileToRead, "root", buffer));
+        if (buffer.compare("server_name") == 0)
+        {
+            if (fileToRead >> buffer) // read the next word after "server_name"
+            {
+                parser.setServerName(buffer);
+                std::cout << "This is the server_name: " << parser.getServerName() << std::endl;
+            }
+        }
+        else if (buffer.compare("listen") == 0)
+        {
+            if (fileToRead >> buffer) // read the next word after "server_name"
+            {
+                parser.setLocalHost(buffer);
+                std::cout << "This is the local_host: " << parser.getLocalHost() << std::endl;
+            }
+        }
+        else if (buffer.compare("root") == 0)
+        {
+            if (fileToRead >> buffer)
+            {
+                parser.setRoot(buffer);
+                std::cout << "This is the root: " << parser.getRoot() << std::endl;
+            }
+        }
     }
+    
     fileToRead.close();
 }
 
-const std::string Parser::searchValue(std::ifstream& fileToRead, std::string valueToParse, std::string buffer)
+void    howManyServer(std::ifstream &fileToRead)
 {
-    // (void) valueToParse;
-    (void) fileToRead;
-    std::string         word;
-    std::string value;
+    std::string buffer;
+    size_t count = 0;
 
-    std::istringstream  stream(buffer);
-    while (std::getline(stream, word, ' '))
+    while (std::getline(fileToRead, buffer, ' '))
     {
-        if (word == valueToParse)
-        {
-            getline(stream, word, ' ');
-            stream >> std::ws;
-        }
-        std::cout << word << '\n';
-    }  
-    return (word);
+        if (buffer.compare("server") == 0)
+            count++;
+    }
+    std::cout << "This is count: " << count << std::endl;
 }

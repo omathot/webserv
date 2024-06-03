@@ -2,8 +2,9 @@
 
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <sstream>
+#include <string>
+#include <stdexcept>
 #include <sys/socket.h>
 #include <vector>
 
@@ -41,7 +42,8 @@ public:
     void  setMainPage(const std::string &t_mainPage);
 
     //parser functions //
-    const std::string searchValue(std::ifstream& fileToRead, std::string valueToParse, std::string buffer);
+    void searchValue(std::string& fileToRead); //, std::string valueToParse, std::string buffer);
+    void webserver(char **arguments, Parser &parser);
 };
 
-void webserver(char **arguments, Parser &parser);
+void    howManyServer(std::string &fileToRead);

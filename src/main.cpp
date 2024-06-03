@@ -6,7 +6,7 @@ int main(int argc, char **argv)
     {
         Parser parse;
 
-        webserver(argv, parse);
+        parse.webserver(argv, parse);
         
     }
     return (0);
