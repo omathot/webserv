@@ -3,13 +3,14 @@
 
 # include "webserv.h"
 
-class Config
-{
+class Config {
+
 private:
 	/* data */
 public:
 	Config(/* args */);
 	~Config();
+
 };
 
 
