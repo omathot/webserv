@@ -1,8 +1,7 @@
 #ifndef SERVER_H
 # define SERVER_H
 
-# include <sys/socket.h>
-# include <iostream>
+# include "webserv.h"
 
 class Server {
 
@@ -17,7 +16,7 @@ public:
 
 	Server	&operator=(const Server &src);
 
-	void	setAddr(void);
+	
 
 };
 
