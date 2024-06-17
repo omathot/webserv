@@ -4,9 +4,9 @@ int main(int argc, char **argv)
 {
     if (argc == 2)
     {
-        Parser parse;
+        Parser parse = Parser();
 
-        parse.webserver(argv, parse);
+        parse.webserver(argv);
         
     }
     return (0);

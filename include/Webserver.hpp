@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <sys/socket.h>
 #include <vector>
+#include <map>
 
 #define CYAN	"\033[36m"
 #define GREEN	"\033[32m"
@@ -22,6 +23,7 @@ private:
     std::string m_localHost;
     std::string m_root;
     std::string m_mainPage;
+    std::map<std::string, std::string> first_draft;
 
 public:
     Parser();
@@ -43,7 +45,8 @@ public:
 
     //parser functions //
     void searchValue(std::string& fileToRead); //, std::string valueToParse, std::string buffer);
-    void webserver(char **arguments, Parser &parser);
+    void webserver(char **arguments);
+    void keyAnalisize();
 };
 
 void    howManyServer(std::string &fileToRead);
