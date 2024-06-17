@@ -51,14 +51,20 @@ struct Parse
     std::vector<Parse *> servers;
 };
 
-std::size_t find_true_space(std::string line) {
+std::size_t find_true_start(std::string line) {
     std::size_t i = 0;
     while (isspace(line[i]))
         i++;
+    return i;
+}
+
+std::size_t find_true_space(std::string line) {
+    std::size_t i = find_true_start(line);
     while (!isspace(line[i]))
         i++;
     return i;
 }
+
 
 Parse *make_parse(std::ifstream &fileToRead) {
     Parse *my_parse = new Parse;
@@ -77,13 +83,13 @@ Parse *make_parse(std::ifstream &fileToRead) {
         else 
             no_commants = buffer;
         if (no_commants.find('{') != std::string::npos) {
-            (*my_parse).servers.push_back(make_parse(fileToRead));
+            (*my_parse).servers.push_back(make_parse(fileToRead)); // make a new child parse and added it to the vector
         }
         else if (no_commants.find(';')!= std::string::npos) {
             space_loc = find_true_space(no_commants);
-            key_word = no_commants.substr(0, space_loc);
-            if ((*my_parse).basic.find(key_word) != (*my_parse).basic.end()) {
-                (*my_parse).basic[key_word].append(no_commants.substr(space_loc, no_commants.length()));
+            key_word = no_commants.substr(find_true_start(no_commants), space_loc);
+            if ((*my_parse).basic.find(key_word) != (*my_parse).basic.end()) { // this is to see if it is already an existant key
+                (*my_parse).basic[key_word].append(no_commants.substr(space_loc, no_commants.length())); // if the key already exist I append the new value to the old one with the ;
             }
             else {
                 (*my_parse).basic[key_word] = no_commants.substr(space_loc, no_commants.length());
@@ -105,7 +111,7 @@ Parse *make_parse(std::ifstream &fileToRead) {
 void print_parse(Parse *my_parse, int num_tab) {
     for (auto it = (*my_parse).basic.cbegin(); it != (*my_parse).basic.cend(); it++) {
         for (int i = 0; i <=num_tab; i++) {
-            std::cout << "  ";
+            std::cout << "|---|";
         }
         
         std::cout << it->first << it->second << std::endl;
