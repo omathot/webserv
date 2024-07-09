@@ -10,6 +10,10 @@ const int PORT = 8080;
 const int BACKLOG = 10;
 const int BUFFER_SIZE = 1024;
 
+
+
+// GET, POST, DELETE, (HEADER)
+// use poll, epoll if need separate thread to monitor
 int main() {
     int server_fd, new_socket;
     struct sockaddr_in address;
