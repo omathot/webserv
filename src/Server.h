@@ -1,14 +1,16 @@
 #ifndef SERVER_H
 # define SERVER_H
 
-# include "webserv.h"
+#include "../lib/includes/webserv.h"
 
 class Server {
 
 private:
 	std::map<long, std::string>	_requests;
-	sockaddr	_addr;
+	sockaddr_in	_addr;
 	long		_fd;
+	long		_newSocket;
+	int			_addrLen;
 
 public:
 	Server();

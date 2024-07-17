@@ -1,7 +1,9 @@
 #include "Server.h"
 
-Server::Server(/* args */) {
-
+Server::Server() {
+	this->_addrLen = 0;
+	this->_fd = 0;
+	this->_newSocket = 0;
 }
 
 Server::Server(const Server &src) {

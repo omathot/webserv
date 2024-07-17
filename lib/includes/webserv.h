@@ -31,6 +31,14 @@
 # include <arpa/inet.h>
 # include <netinet/in.h>
 
+
+struct Parse
+{
+    std::map<std::string, std::string> basic;
+    std::vector<Parse *> servers;
+};
+
+
 # define DEFAULT_CONFIG ".src/config/default.conf"
 
 #endif

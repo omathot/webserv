@@ -5,17 +5,43 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include "Server.h"
 
 const int PORT = 8080;
 const int BACKLOG = 10;
 const int BUFFER_SIZE = 1024;
 
+Parse *make_parse(std::ifstream &fileToRead);
+void print_parse(Parse *my_parse, int num_tab);
+void    free_parse(Parse *my_parse);
 
+std::string read_config() {
+    std::ifstream inputFile("src/config/default.conf");
+    if (!inputFile.is_open()) {
+        std::cerr << "Error opening config file" << std::endl;
+        exit(1);
+    }
+    Parse *sam_truc = make_parse(inputFile);
+    print_parse(sam_truc, 1);
+    free_parse(sam_truc);
+
+    std::string line;
+    std::string content;
+    while (getline(inputFile, line)) {
+        content += line;
+    }
+    inputFile.close();
+    return (content);
+}
 
 // GET, POST, DELETE, (HEADER)
 // use poll, epoll if need separate thread to monitor
 int main() {
-    int server_fd, new_socket;
+    std::string config_content = read_config();
+    std::cout << config_content << std::endl;
+    // pause();
+    // Server server = Server();
+    long server_fd, new_socket;
     struct sockaddr_in address;
     int addrlen = sizeof(address);
     char buffer[BUFFER_SIZE] = {0};
