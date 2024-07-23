@@ -27,17 +27,31 @@ std::string read_config() {
     // free_parse(sam_truc);
     std::vector<server> *servers = make_all_server(inputFile);
     // std::cout << servers;
+    std::vector<int> ports;
+    for (int x = 0; x < servers->size(); x++) {
+        bool is_in = false;
+        for (size_t i = 0; i < ports.size(); i++)
+        {
+            if (ports[i] == (*servers)[x].port)
+                is_in = true;
+        }
+        if (!is_in)
+            ports.push_back((*servers)[x].port);
+    }
     for (int i = 0; i <= servers->size(); i++) {
         (*servers)[i]._socket.sin_family = AF_INET;
         (*servers)[i]._socket.sin_addr.s_addr = INADDR_ANY;
-        (*servers)[i]._socket.sin_port = htons((*servers)[i].port);
+        (*servers)[i]._socket.sin_port = htons(ports[i]);
+        std::cout << ports[i] << std::endl;
+        // ports.erase(ports.begin());
 
         if (((*servers)[i]._fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
             perror("socket failed");
             exit(EXIT_FAILURE);
         }
+        std::cout << "server " << i << "'s fd = " << (*servers)[i]._fd << std::endl;
+        std::cout << "server " << i << "'s _socket = " << (*servers)[i]._socket.sin_addr.s_addr << std::endl;
         std::cout << "first checkpoint" << std::endl;
-        struct sockaddr_in *address = &(*servers)[i]._socket;
         if (bind((*servers)[i]._fd, (struct sockaddr *)&(*servers)[i]._socket, sizeof((*servers)[i]._socket)) < 0) {
             perror("bind failed");
             close((*servers)[i]._fd);
@@ -49,7 +63,7 @@ std::string read_config() {
             close((*servers)[i]._fd);
             exit(EXIT_FAILURE);
         }
-        std::cout << "done i++\n";
+        std::cout << "finished server " << i << std::endl;
     }
 
 
