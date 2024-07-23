@@ -32,7 +32,7 @@ std::string read_config() {
         (*servers)[i]._socket.sin_addr.s_addr = INADDR_ANY;
         (*servers)[i]._socket.sin_port = htons((*servers)[i].port);
 
-        if ((*servers)[i]._fd = socket(AF_INET, SOCK_STREAM, 0) == -1) {
+        if (((*servers)[i]._fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
             perror("socket failed");
             exit(EXIT_FAILURE);
         }
