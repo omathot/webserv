@@ -30,12 +30,14 @@ int main()
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(PORT);
 
+    //Assigns the specified address to the socket.
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
+    //the socket is waiting for the connection
     if (listen(server_fd, BACKLOG) < 0) {
         perror("listen");
         close(server_fd);
@@ -44,7 +46,9 @@ int main()
 
     std::cout << "Server listening on port " << PORT << std::endl;
 
-    while (true) {
+    while (true) 
+    {
+        //connection creation with the socket. 
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) 
         {
             perror("accept");
@@ -52,6 +56,7 @@ int main()
             exit(EXIT_FAILURE);
         }
 
+        //open the file
         std::ifstream file(hello_message);
         if (!file.is_open()) {
             perror("file open failed");
@@ -59,14 +64,16 @@ int main()
             continue;
         }
 
-        // read the file
+        // read the file ("file") and save it in file_content
         std::stringstream file_content;
         //read(new_socket, buffer, BUFFER_SIZE);
         //std::cout << "Received request:\n" << buffer << std::endl;
         file_content << file.rdbuf();
+        //converting the stringstream in string
         std::string file_string = file_content.str();
         file.close();
 
+        //creating the HTTP answer
         std::stringstream response;
         response << "HTTP/1.1 200 OK\r\n";
         response << "Content-Type: text/html\r\n";
@@ -75,7 +82,7 @@ int main()
         response << file_string;
         std::string response_str = response.str();
 
-        // send the file
+        // send the file to the client using the socket
         send(new_socket, response_str.c_str(), response_str.length(), 0);
         close(new_socket);
     }
