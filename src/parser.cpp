@@ -176,6 +176,7 @@ std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf) 
     return o;
 }
 
+
 std::vector<std::string> my_strsplit(std::string src, char delemiter) {
     std::vector<std::string> to_return;// = std::vector<std::string>;
     size_t start = 0;

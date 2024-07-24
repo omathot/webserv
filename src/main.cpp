@@ -28,6 +28,7 @@ std::string read_config() {
     std::vector<server> *servers = make_all_server(inputFile);
     // std::cout << servers;
     std::vector<int> ports;
+    std::map<int, running_serveurs *> running;
     for (int x = 0; x < servers->size(); x++) {
         bool is_in = false;
         for (size_t i = 0; i < ports.size(); i++)
@@ -38,34 +39,40 @@ std::string read_config() {
         if (!is_in)
             ports.push_back((*servers)[x].port);
     }
-    for (int i = 0; i <= servers->size(); i++) {
-        (*servers)[i]._socket.sin_family = AF_INET;
-        (*servers)[i]._socket.sin_addr.s_addr = INADDR_ANY;
-        (*servers)[i]._socket.sin_port = htons(ports[i]);
-        std::cout << ports[i] << std::endl;
-        // ports.erase(ports.begin());
-
-        if (((*servers)[i]._fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    for (int x = 0; x < ports.size(); x++) {
+        running_serveurs *in_making = new running_serveurs;
+        in_making->_socket.sin_family = AF_INET;
+        in_making->_socket.sin_family = htons(ports[x]);
+        in_making->_socket.sin_addr.s_addr = INADDR_ANY;
+        bind(in_making->fd, (struct sockaddr*)&(*in_making)._socket, sizeof(in_making->_socket));
+        // if ( < 0) {
+        //     perror("bind failed");
+        //     close(in_making->fd);
+        //     exit(EXIT_FAILURE);
+        // }
+        if ((in_making->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
             perror("socket failed");
             exit(EXIT_FAILURE);
         }
-        std::cout << "server " << i << "'s fd = " << (*servers)[i]._fd << std::endl;
-        std::cout << "server " << i << "'s _socket = " << (*servers)[i]._socket.sin_addr.s_addr << std::endl;
-        std::cout << "first checkpoint" << std::endl;
-        if (bind((*servers)[i]._fd, (struct sockaddr *)&(*servers)[i]._socket, sizeof((*servers)[i]._socket)) < 0) {
-            perror("bind failed");
-            close((*servers)[i]._fd);
-            exit(EXIT_FAILURE);
-        }
-        std::cout << "second checkpoint" << std::endl;
-        if (listen((*servers)[i]._fd, BACKLOG) < 0) {
+        std::cout << "test\n";
+        if (listen(in_making->fd, BACKLOG) < 0) {
             perror("listen");
-            close((*servers)[i]._fd);
+            close(in_making->fd);
             exit(EXIT_FAILURE);
         }
-        std::cout << "finished server " << i << std::endl;
+        for (int i = 0; i <= servers->size(); i++) {
+            if ((*servers)[i].port == ports[x]) {
+                in_making->mini_server.push_back((*servers)[i]);
+            }
+        }
+        running[ports[x]] = in_making;
     }
-
+    for (auto it = running.begin(); it != running.end(); it++)
+    {
+        std::cout << it->first << " : \n";
+        std::cout << it->second->fd << " -> " << &it->second->mini_server; 
+    }
+    
 
     std::string line;
     std::string content;

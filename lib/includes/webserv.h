@@ -78,6 +78,13 @@ struct Parse
 
 std::vector<server> *make_all_server(std::ifstream &fileToRead);
 
+struct running_serveurs
+{
+    int fd;
+    sockaddr_in _socket;
+    std::vector<server> mini_server;
+};
+
 
 # define DEFAULT_CONFIG ".src/config/default.conf"
 
