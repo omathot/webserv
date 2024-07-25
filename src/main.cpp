@@ -71,7 +71,32 @@ std::string read_config() {
     {
         std::cout << it->first << " : \n";
         std::cout << it->second->fd << " -> " << &it->second->mini_server; 
+        long server_fd, new_socket;
+        char buffer[BUFFER_SIZE] = {0};
+        const char *hello_message = 
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: 13\r\n"
+        "\r\n"
+        "<h1>PPOOPP</h1>";
+        if (it == running.end())
+            while (true) {
+                if ((new_socket = accept(it->second->fd, (struct sockaddr *)&it->second->_socket, (socklen_t*)&it->second->_socket)) < 0) {
+                    perror("accept");
+                    close(it->second->fd);
+                    exit(EXIT_FAILURE);
+                }
+
+                read(new_socket, buffer, BUFFER_SIZE);
+                std::cout << "Received request:\n" << buffer << std::endl;
+                
+                send(new_socket, hello_message, strlen(hello_message), 0);
+                std::cout << "Hello message sent\n";
+                
+                close(new_socket);
+            }
     }
+
     
 
     std::string line;
