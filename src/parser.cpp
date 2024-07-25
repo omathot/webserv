@@ -84,7 +84,7 @@ Parse *make_parse(std::ifstream &fileToRead) {
 
 
 void print_parse(Parse *my_parse, int num_tab) {
-    for (auto it = (*my_parse).basic.cbegin(); it != (*my_parse).basic.cend(); it++) {
+    for (std::map<std::string, std::string>::const_iterator it = (*my_parse).basic.cbegin(); it != (*my_parse).basic.cend(); it++) {
         for (int i = 0; i <=num_tab; i++) {
             std::cout << "|---|";
         }
@@ -149,7 +149,7 @@ std::ostream& operator<<(std::ostream& o, const server& s) {
     o << "Uploads Dir: " << s.uploads_dir << "\n";
     o << "Autoindex: " << (s.autoindex ? "true" : "false") << "\n";
     o << "Error Pages: | ";
-    for (auto it = s.error_pages.begin(); it != s.error_pages.end(); it++)
+    for (std::map<int, std::string>::const_iterator it = s.error_pages.begin(); it != s.error_pages.end(); it++)
     {
         o << it->first << ": " << it->second << " | ";
     }

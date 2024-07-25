@@ -44,8 +44,8 @@ std::string read_config() {
         in_making->_socket.sin_family = AF_INET;
         in_making->_socket.sin_family = htons(ports[x]);
         in_making->_socket.sin_addr.s_addr = INADDR_ANY;
-        bind(in_making->fd, (struct sockaddr*)&(*in_making)._socket, sizeof(in_making->_socket));
-        // if ( < 0) {
+        int temp = bind(in_making->fd, (struct sockaddr*)&(*in_making)._socket, sizeof(in_making->_socket));
+        // if (temp < 0) {
         //     perror("bind failed");
         //     close(in_making->fd);
         //     exit(EXIT_FAILURE);
@@ -67,7 +67,7 @@ std::string read_config() {
         }
         running[ports[x]] = in_making;
     }
-    for (auto it = running.begin(); it != running.end(); it++)
+    for (std::map<int, running_serveurs *>::iterator it = running.begin(); it != running.end(); it++)
     {
         std::cout << it->first << " : \n";
         std::cout << it->second->fd << " -> " << &it->second->mini_server; 
