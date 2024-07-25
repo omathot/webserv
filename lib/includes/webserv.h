@@ -31,6 +31,9 @@
 # include <arpa/inet.h>
 # include <netinet/in.h>
 
+# include <poll.h>
+# include <sys/epoll.h>
+
 
 
 enum method_type {
@@ -80,7 +83,7 @@ std::vector<server> *make_all_server(std::ifstream &fileToRead);
 
 struct running_serveurs
 {
-    int fd;
+    long fd;
     sockaddr_in _socket;
     std::vector<server> mini_server;
 };
