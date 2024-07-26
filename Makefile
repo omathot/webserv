@@ -45,9 +45,12 @@ RESET	:= \033[0m
 #---------------------------------
 #RULES
 
-all	: $(NAME)
-		@echo "$(GREEN)Project built successfully !$(RESET)"
-		@echo "$(BLUE)Usage: ./cub3d <map>$(RESET)"
+all : 
+		g++ -fsanitize=address -g src/main.cpp src/parser.cpp
+
+# all	: $(NAME)
+# 		@echo "$(GREEN)Project built successfully !$(RESET)"
+# 		@echo "$(BLUE)Usage: ./cub3d <map>$(RESET)"
 
 $(NAME) : $(OBJ) $(LIBFT_A)
 		@echo "$(CYAN)Creating the executable...$(RESET)"

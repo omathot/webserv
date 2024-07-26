@@ -180,22 +180,6 @@ std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf) 
 std::vector<std::string> my_strsplit(std::string src, char delemiter) {
     std::vector<std::string> to_return;// = std::vector<std::string>;
     size_t start = 0;
-    // size_t end = src.find(delemiter);
-    // while (end == start && end != src.size()) {
-    //         start = end + 1;
-    //         end = src.find(delemiter, start);
-    // }
-    // while (end < src.size() && start < end) {
-    //     // std::cout << "alive and did \n";
-    //     to_return.push_back(src.substr(start, end - start));
-    //     start = end + 1;
-    //     end = src.find(delemiter, start);
-    //     while (end == start && end != src.size()) {
-    //         start = end + 1;
-    //         end = src.find(delemiter, start);
-    //     }
-    //     // if (end == std::npo)
-    // }
     std::string arg;
     std::istringstream iss(src);
     int i;

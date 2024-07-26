@@ -86,6 +86,28 @@ struct running_serveurs
     long fd;
     sockaddr_in _socket;
     std::vector<server> mini_server;
+    int socke_size;
+};
+
+
+std::vector<std::string> my_strsplit(std::string src, char delemiter);
+
+enum REQUEST_INFO {
+Method,
+Domane_Name,
+Transfer_Protocol,
+Host,
+User_Agent,
+Accept,
+Accept_Language,
+Accept_Encoding,
+Connection,
+Upgrade_Insecure_Requests,
+Sec_Fetch_Dest,
+Sec_Fetch_Mode,
+Sec_Fetch_Site,
+Sec_Fetch_User,
+Priority,
 };
 
 
