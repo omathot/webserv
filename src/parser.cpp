@@ -287,8 +287,6 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
 std::vector<server > *make_all_server(std::ifstream &fileToRead) {
     Parse *parser = make_parse(fileToRead);
     std::string useless;
-    // print_parse(parser, 1);
-    // pause();
     std::vector<server> *all_server = new std::vector<server>;
     size_t i;
     server temp;
@@ -307,20 +305,6 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.loc_method = treat_loc_method(parser->servers[i]->servers, temp.autoindex);
         all_server->push_back(temp);
     }
-    // std::cout << all_server;
-    
-    // int            _addrLen = i;
-
-    // // Creating socket file descriptor
-    // if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-    //     perror("socket failed");
-    //     exit(EXIT_FAILURE);
-    // }
-    //     struct sockaddr_in address;
-    // // Attaching socket to the port 8080
-    // address.sin_family = AF_INET;
-    // address.sin_addr.s_addr = INADDR_ANY;
-    // address.sin_port = htons(PORT);
     return all_server;
 }
 
@@ -365,7 +349,6 @@ std::map<int, running_serveurs *> read_config() {
             close(in_making->fd);
             exit(EXIT_FAILURE);
         }
-        //fcntl(info->fd, F_SETFL, O_NONBLOCK);
 
         // std::cout << ports[x];
         int temp = bind(in_making->fd, (struct sockaddr*)&((*in_making)._socket), in_making->socke_size);
