@@ -2,26 +2,12 @@
 #VARIABLES
 
 NAME 	:= webserv
-SRC 	:= main.c
+SRC 	:= main.cpp parser.cpp
 SUBDIR	:= srcs/
 SRCS	:= $(addprefix $(SUBDIR),$(SRC))
 OBJ 	:= $(SRCS:.c=.o)
-LIBFT_A	:= lib/libft/libft.a
-CMP		:= gcc
+CMP		:= g++
 FLAGS 	:= -Werror -Wall -Wextra -g -I lib
-# OS 		:= $(shell uname -m)
-
-
-#---------------------------------
-#OS CHECK
-
-# ifeq ($(OS), arm64)
-# 	OSFLAGS = -lglfw -L"/opt/homebrew/Cellar/glfw/3.3.8/lib/"
-# else ifeq ($(OS), x86_64)
-# 	OSFLAGS	= -lglfw -L"/Users/omathot/.brew/opt/glfw/lib/"
-# else
-# 	$(error Unsupported architecture: $(OS))
-# endif
 
 #---------------------------------
 #FORMATTING AND FUN
@@ -47,37 +33,23 @@ RESET	:= \033[0m
 
 all : 
 #		 g++ -fsanitize=address -g src/main.cpp src/parser.cpp
-		g++ -g src/main.cpp src/parser.cpp
+		g++ -g src/main.cpp src/parser.cpp src/Socket.cpp
 
 # all	: $(NAME)
 # 		@echo "$(GREEN)Project built successfully !$(RESET)"
 # 		@echo "$(BLUE)Usage: ./cub3d <map>$(RESET)"
 
-$(NAME) : $(OBJ) $(LIBFT_A)
-		@echo "$(CYAN)Creating the executable...$(RESET)"
-		@$(CC) $(FLAGS) $(OSFLAGS) $(OBJ) $(LIBFT_A) -o $(NAME)
+$(NAME) : $(OBJ)
+		@$(CC) $(FLAGS) $(OSFLAGS) $(OBJ) -o $(NAME)
 
-%.o : %.c
-		@echo "$(CYAN)Compiling...$(RESET) $<"
-		$(call prettycomp, $(CMP) -c $(FLAGS) -o $@ $<)
-
-$(LIBFT_A) :
-		@echo "$(BLUE)Building libft library...$(RESET)\n"
-		$(call prettycomp, @make -C lib/libft)
+%.o : %.cpp
+		$(CMP) -c $(FLAGS) -o $@ $<
 
 clean :
-		@rm -f $(OBJ) ./lib/libft/libft.a
-		@echo "$(GREEN)Cleaned up the artifacts !$(RESET)"
+		@rm -f $(OBJ)
 
 fclean :
 		@rm -f $(NAME) $(OBJ)
-		@echo "$(MAGENTA)Cleaned up executable !$(RESET)"
-
-hardclean :
-		@make fclean
-		cd ./lib/libft && make clean
-		cd ./lib/libft && make fclean
-		@echo "$(MAGENTA)Cleaned up all built files!$(RESET)"
 
 re : fclean all
 

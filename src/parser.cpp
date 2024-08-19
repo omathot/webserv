@@ -1,4 +1,5 @@
 #include "../lib/includes/webserv.h"
+#include "Parser.h"
 
 bool is_all_space(std::string str) {
     int i = 0;
@@ -333,36 +334,32 @@ std::map<int, running_serveurs *> read_config() {
 
     for (int x = 0; x < ports.size(); x++) {
         running_serveurs *in_making = new running_serveurs;
-        in_making->_socket.sin_family = AF_INET;
-        in_making->_socket.sin_port = htons(ports[x]);
-        in_making->_socket.sin_addr.s_addr = INADDR_ANY;
-        in_making->socke_size = sizeof(in_making->_socket);
-        
-        if ((in_making->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-            perror("socket failed");
-            exit(EXIT_FAILURE);
-        }
-        int opt = 1;
-        if (setsockopt(in_making->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-        {
-            std::cerr << "Failed to set socket options" << std::endl;
-            close(in_making->fd);
-            exit(EXIT_FAILURE);
-        }
+        in_making->_socket = new ServerSocket(AF_INET, SOCK_STREAM, 0, ports[x], INADDR_ANY);
 
-        // std::cout << ports[x];
-        int temp = bind(in_making->fd, (struct sockaddr*)&((*in_making)._socket), in_making->socke_size);
-        if (temp < 0) {
-            perror("bind failed");
-            close(in_making->fd);
-            exit(EXIT_FAILURE);
-        }
-        std::cout << "test\n";
-        if (listen(in_making->fd, BACKLOG) < 0) {
-            perror("listen");
-            close(in_making->fd);
-            exit(EXIT_FAILURE);
-        }
+
+        // in_making->_socket.sin_family = AF_INET;
+        // in_making->_socket.sin_port = htons(ports[x]);
+        // in_making->_socket.sin_addr.s_addr = INADDR_ANY;
+        // in_making->socke_size = sizeof(in_making->_socket);
+        
+        // if ((in_making->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        //     perror("socket failed");
+        //     exit(EXIT_FAILURE);
+        // }
+
+        // // std::cout << ports[x];
+        // int temp = bind(in_making->fd, (struct sockaddr*)&((*in_making)._socket), in_making->socke_size);
+        // if (temp < 0) {
+        //     perror("bind failed");
+        //     close(in_making->fd);
+        //     exit(EXIT_FAILURE);
+        // }
+        // std::cout << "test\n";
+        // if (listen(in_making->fd, BACKLOG) < 0) {
+        //     perror("listen");
+        //     close(in_making->fd);
+        //     exit(EXIT_FAILURE);
+        // }
 
         for (int i = 0; i <= servers->size(); i++) {
             if ((*servers)[i].port == ports[x]) {

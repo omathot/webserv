@@ -1,21 +1,18 @@
-#include <iostream>
 #include "../lib/includes/webserv.h"
 #include <cstring>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <unistd.h>
-#include "Server.h"
+// #include "Server.h"
 #include "fcntl.h"
+# include "Parser.h"
 
 const int PORT = 8080;
-const int BACKLOG = 10;
 const int BUFFER_SIZE = 1024;
 
 Parse *make_parse(std::ifstream &fileToRead);
 void print_parse(Parse *my_parse, int num_tab);
 void    free_parse(Parse *my_parse);
 std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf);
+std::vector<server> *make_all_server(std::ifstream &fileToRead);
 
 std::map<int, running_serveurs *> read_config() ;
 
@@ -126,7 +123,7 @@ void setNonBlocking(int sockfd) {
 
 bool is_open_socket(int i, std::map<int, running_serveurs *> config_content) {
     for (auto it = config_content.begin(); it != config_content.end(); it++) {
-        if (i == it->second->fd)
+        if (i == it->second->_socket->getSocketFd())
             return true;
     }
     return false;
@@ -135,7 +132,7 @@ bool is_open_socket(int i, std::map<int, running_serveurs *> config_content) {
 
 running_serveurs *which_open_socket(int i, std::map<int, running_serveurs *> config_content) {
     for (auto it = config_content.begin(); it != config_content.end(); it++) {
-        if (i == it->second->fd)
+        if (i == it->second->_socket->getSocketFd())
             return it->second;
     }
     return nullptr;
@@ -147,7 +144,7 @@ int main() {
     // * get config 
     std::map<int, running_serveurs *>  config_content = read_config();
     for (auto it = config_content.begin(); it != config_content.end(); it++) {
-        std::cout << it->first << ": with fd: " << it->second->fd << " has server: ";
+        std::cout << it->first << ": with fd: " << it->second->_socket->getSocketFd() << " has server: ";
         for (size_t i = 0; i < it->second->mini_server.size(); i++) {
             std::cout << it->second->mini_server[i].name << " = name,  ";
         }
@@ -165,10 +162,10 @@ int main() {
 
 
     FD_ZERO(&master_fds);
-    FD_SET(config_content[8080]->fd, &master_fds);
-    FD_SET(config_content[8070]->fd, &master_fds);
-    fd_max = std::max(config_content[8080]->fd, config_content[8070]->fd);
-    fd_min = std::min(config_content[8080]->fd, config_content[8070]->fd);
+    FD_SET(config_content[8080]->_socket->getSocketFd(), &master_fds);
+    FD_SET(config_content[8070]->_socket->getSocketFd(), &master_fds);
+    fd_max = std::max(config_content[8080]->_socket->getSocketFd(), config_content[8070]->_socket->getSocketFd());
+    fd_min = std::min(config_content[8080]->_socket->getSocketFd(), config_content[8070]->_socket->getSocketFd());
 
     std::cout << "Server listening on port 8080..." << std::endl;
 
