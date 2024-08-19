@@ -46,7 +46,8 @@ RESET	:= \033[0m
 #RULES
 
 all : 
-		g++ -fsanitize=address -g src/main.cpp src/parser.cpp
+#		 g++ -fsanitize=address -g src/main.cpp src/parser.cpp
+		g++ -g src/main.cpp src/parser.cpp
 
 # all	: $(NAME)
 # 		@echo "$(GREEN)Project built successfully !$(RESET)"

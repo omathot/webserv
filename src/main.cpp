@@ -17,70 +17,7 @@ void print_parse(Parse *my_parse, int num_tab);
 void    free_parse(Parse *my_parse);
 std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf);
 
-std::map<int, running_serveurs *> read_config() {
-    std::ifstream inputFile("src/config/default.conf");
-    if (!inputFile.is_open()) {
-        std::cerr << "Error opening config file" << std::endl;
-        exit(1);
-    }
-    std::vector<server> *servers = make_all_server(inputFile);
-    std::vector<int> ports;
-    std::map<int, running_serveurs *> running;
-    for (int x = 0; x < servers->size(); x++) {
-        bool is_in = false;
-        for (size_t i = 0; i < ports.size(); i++)
-        {
-            if (ports[i] == (*servers)[x].port)
-                is_in = true;
-        }
-        if (!is_in)
-            ports.push_back((*servers)[x].port);
-    }
-
-    for (int x = 0; x < ports.size(); x++) {
-        running_serveurs *in_making = new running_serveurs;
-        in_making->_socket.sin_family = AF_INET;
-        in_making->_socket.sin_port = htons(ports[x]);
-        in_making->_socket.sin_addr.s_addr = INADDR_ANY;
-        in_making->socke_size = sizeof(in_making->_socket);
-        
-        if ((in_making->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-            perror("socket failed");
-            exit(EXIT_FAILURE);
-        }
-        int opt = 1;
-        if (setsockopt(in_making->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-        {
-            std::cerr << "Failed to set socket options" << std::endl;
-            close(in_making->fd);
-            exit(EXIT_FAILURE);
-        }
-        //fcntl(info->fd, F_SETFL, O_NONBLOCK);
-
-        // std::cout << ports[x];
-        int temp = bind(in_making->fd, (struct sockaddr*)&((*in_making)._socket), in_making->socke_size);
-        if (temp < 0) {
-            perror("bind failed");
-            close(in_making->fd);
-            exit(EXIT_FAILURE);
-        }
-        std::cout << "test\n";
-        if (listen(in_making->fd, BACKLOG) < 0) {
-            perror("listen");
-            close(in_making->fd);
-            exit(EXIT_FAILURE);
-        }
-
-        for (int i = 0; i <= servers->size(); i++) {
-            if ((*servers)[i].port == ports[x]) {
-                in_making->mini_server.push_back((*servers)[i]);
-            }
-        }
-        running[ports[x]] = in_making;
-    }
-    inputFile.close();
-    return (running);
-}
+std::map<int, running_serveurs *> read_config() ;
 
 std::string getRequestInfoName(REQUEST_INFO info) {
     switch (info) {
@@ -226,7 +163,7 @@ int main() {
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     fd_set read_fds, master_fds;
-    int fd_max, new_fd;
+    int fd_max, new_fd, fd_min;
     char buffer[BUFFER_SIZE];
 
 
@@ -234,7 +171,8 @@ int main() {
     FD_ZERO(&master_fds);
     FD_SET(config_content[8080]->fd, &master_fds);
     FD_SET(config_content[8070]->fd, &master_fds);
-    fd_max = std::max(config_content[8080]->fd, config_content[8070]->fd);;
+    fd_max = std::max(config_content[8080]->fd, config_content[8070]->fd);
+    fd_min = std::min(config_content[8080]->fd, config_content[8070]->fd);
 
     std::cout << "Server listening on port 8080..." << std::endl;
 
@@ -245,8 +183,10 @@ int main() {
             return 1;
         }
 
-        for (int i = 0; i <= fd_max; ++i) {
+        for (int i = fd_min; i <= fd_max; ++i) {
             if (FD_ISSET(i, &read_fds)) {
+
+                // maybe redent
                 if (is_open_socket(i, config_content)) {
                     // New connection
                     new_fd = accept(i, (struct sockaddr *)&client_addr, &client_addr_len);
@@ -264,7 +204,9 @@ int main() {
                         simple_responce(new_fd, which_open_socket(i, config_content));
                         std::cout << "New connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
                     }
-                } else {
+                }
+                else {
+                    std::cout << "are you ever here?\n";
                     // Handle data from a client
                     int nbytes = read(i, buffer, BUFFER_SIZE);
                     if (nbytes <= 0) {
@@ -290,6 +232,8 @@ int main() {
                         }
                     }
                 }
+
+
             }
         }
     }
