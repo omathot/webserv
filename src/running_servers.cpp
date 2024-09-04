@@ -40,6 +40,7 @@ RunningServers::RunningServers() {
     for (auto it = running.begin(); it != running.end(); it++) {
 		std::cout << it->first << "  " << it->second->_socket->getSocketFd() << std::endl;
 		push_and_update(it->second->_socket->getSocketFd());
+        _fd_to_port[it->second->_socket->getSocketFd()] =it->first;
     }
 	_servers = running;
 	// std::cout << servers << std::endl;

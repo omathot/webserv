@@ -64,6 +64,8 @@ struct UserRequestInfo {
 	std::map<method_type, bool> methods_asked;
 };
 
+void responce_error(int code);
+
 
 # define DEFAULT_CONFIG ".src/config/default.conf"
 

@@ -109,19 +109,33 @@ void simple_response(long new_socket, running_server *info) {
 // /tuct/aginore
 
 int match_against_config_domains(running_server* server, UserRequestInfo req) {
+    // doesn't feel too right
     for (size_t i = 0; i < server->subdomain.size(); i++) {
         std::cout << server->subdomain[i].name << std::endl; 
-        if (server->subdomain[i].name == req.domain) {
-            return (i);
+        if (server->subdomain[i].name.size() > req.domain.size() - 1
+            && server->subdomain[i].name.size() < req.domain.size() + 3) {
+            if (server->subdomain[i].name.find(req.domain) != std::string::npos)
+                return (i);
         }
     }
     return (-1);
 }
 
+
+
 void    checking_access_rights(server &server, UserRequestInfo req) {
-    // if (server.loc_method) {
-        
-    // }
+    for (size_t i = 0; i < server.loc_method.size(); i++)
+    {
+        // can optimise this
+        if (server.loc_method[i].path.find(req.domain) != std::string::npos) {
+            
+            // for (size_t j = 0; j < req.subdomains.size(); j++) {
+            //     if (server.loc_method[j].path)
+                 
+            // }
+        }
+    }
+    responce_error(130);
 }
 
 void handle_connection(int client_fd, running_server* server) {
@@ -141,25 +155,25 @@ void handle_connection(int client_fd, running_server* server) {
     }
     user_request = extract_from_buffer(buffer);
     int config_server_index = match_against_config_domains(server, user_request);
-    // if (config_server_index == -1) {
-    //     std::cout << "did go in if \n";
-    //     const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>ERROR CONFIG_SERVER_INDEX RETURNED -1</h1>";
-    //     send(client_fd, response, strlen(response), 0);
-    // } else {
-    //     checking_access_rights(server->subdomain[config_server_index], user_request);
-    // }
-    if (user_request.domain == "/poop.com") {
+    if (config_server_index == -1) {
         std::cout << "did go in if \n";
-        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
+        const char* response = "HTTP/1.1 404 KO\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>ERROR CONFIG_SERVER_INDEX RETURNED </h1>";
         send(client_fd, response, strlen(response), 0);
     } else {
-        std::cout << "did go in if \n";
-        std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>";
-        response.append(user_request.domain +  "</h1>");
-        // user_request.domain
-        // "</h1>";
-        send(client_fd, response.data(), response.size(), 0);
+        checking_access_rights(server->subdomain[config_server_index], user_request);
     }
+    // if (user_request.domain == "/poop.com") {
+    //     std::cout << "did go in if \n";
+    //     const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
+    //     send(client_fd, response, strlen(response), 0);
+    // } else {
+    //     std::cout << "did go in if \n";
+    //     std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>";
+    //     response.append(user_request.domain +  "</h1>");
+    //     // user_request.domain
+    //     // "</h1>";
+    //     send(client_fd, response.data(), response.size(), 0);
+    // }
 
 
 
@@ -219,7 +233,8 @@ void	print_server_info(RunningServers active_servers) {
 
 int main() {
     RunningServers active_servers;
-    // print_server_info(active_servers);
+    print_server_info(active_servers);
+
     std::cout << "Server listening on multiple ports..." << std::endl;
 
     while (true) {
@@ -245,7 +260,7 @@ int main() {
                 if (client_fd >= 0) {
                     // setNonBlocking(client_fd);   // trying blocking writing
                     // simple_response(client_fd, active_servers._servers[fd]);
-                    handle_connection(client_fd, active_servers._servers[8080]);
+                    handle_connection(client_fd, active_servers._servers[active_servers._fd_to_port[fd]]);
                 }
             }
 

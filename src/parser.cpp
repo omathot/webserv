@@ -46,10 +46,8 @@ Parse *make_parse(std::ifstream &fileToRead) {
         }
         else if (buffer.find('#') != std::string::npos)
             no_commants = buffer.substr(0, buffer.find('#'));
-        else 
+        else
             no_commants = buffer;
-
-
         if (no_commants.find('{') != std::string::npos) {
             (*my_parse).servers.push_back(make_parse(fileToRead)); // make a new child parse and added it to the vector
             if (no_commants.find(loc_triger) != std::string::npos) {
@@ -184,6 +182,10 @@ std::vector<std::string> my_strsplit(std::string src, char delemiter) {
     std::string arg;
     std::istringstream iss(src);
     int i;
+    // maybe need to be better
+    if (src.size() < 2) {
+        return {src};
+    }
     while (std::getline(iss, arg, delemiter)) {
         for (i = 0; i < arg.size(); i++) {
             if (arg[i] != delemiter)
@@ -339,6 +341,7 @@ UserRequestInfo extract_from_buffer(char *buffer) {
             to_return.methods_asked[method_type::HEADER] = true;
         }
 	}
+    std::cout << usefull_info[1] << std::endl; 
     to_return.subdomains = my_strsplit(usefull_info[1], '/');
 	to_return.domain = to_return.subdomains[0];
     to_return.subdomains.erase(to_return.subdomains.begin());

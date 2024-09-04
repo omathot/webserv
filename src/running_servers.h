@@ -13,6 +13,7 @@ public:
 	int _nfds;
 	std::vector<struct pollfd> _track_fds;
 	std::map<int, running_server *> _servers;
+    std::map<int, int> _fd_to_port;
 
 	RunningServers();
 	~RunningServers();
