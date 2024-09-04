@@ -50,14 +50,21 @@ RunningServers::~RunningServers() {
 
 }
 
-void RunningServers::push_and_update(int fd) {
-	struct pollfd pfd;
-	pfd.fd = fd;
-	pfd.events = POLLIN;  // Assuming you want to check for read events
-	pfd.revents = 0;
-	_track_fds.push_back(pfd);
-	_nfds++;
+void	RunningServers::push_and_update(int fd) {
+	 pollfd new_pollfd = {fd, POLLIN, 0};
+	_track_fds.push_back(new_pollfd);
+	_nfds = _track_fds.size();
 }
+
+void	RunningServers::remove_fd(int fd) {
+	auto it = std::find_if(_track_fds.begin(), _track_fds.end(),
+			[fd](const pollfd& pfd) { return pfd.fd == fd; });
+	if (it != _track_fds.end()) {
+		_track_fds.erase(it);
+		_nfds = _track_fds.size();
+	}
+}
+
 
 pollfd* RunningServers::get_track_fds_array() {
 	pollfd* poll_events= new pollfd[_nfds];

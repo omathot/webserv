@@ -2,11 +2,8 @@
 # include "Socket.h"
 // #include "Parser.h"
 
-struct running_server
-{
+struct running_server {
     ServerSocket *_socket;
-    // long fd;
-    // sockaddr_in _socket;
     std::vector<server> subdomain;
     int socke_size;
 };
@@ -20,7 +17,8 @@ public:
 	RunningServers();
 	~RunningServers();
 
-	void push_and_update(int fd);
+	void	push_and_update(int fd);
+	void	remove_fd(int fd);
 	pollfd* get_track_fds_array(); // New method to get raw pointer
 
 };
