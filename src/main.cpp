@@ -13,7 +13,7 @@ void print_parse(Parse *my_parse, int num_tab);
 void    free_parse(Parse *my_parse);
 std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf);
 std::vector<server> *make_all_server(std::ifstream &fileToRead);
-user_request_info parse_user_buffer(char *buffer);
+UserRequestInfo extract_from_buffer(char *buffer);
 
 std::string getRequestInfoName(REQUEST_INFO info) {
     switch (info) {
@@ -106,12 +106,25 @@ void simple_response(long new_socket, running_server *info) {
     std::cout << "Hello message sent\n";    
 }
 
+int match_against_config_domains(running_server* server, UserRequestInfo req) {
+    for (size_t i = 0; i != server->subdomain.size(); i++) {
+        if (server->subdomain[i].name == req.domain) {
+            return (i);
+        }
+    }
+    return (-1);
+}
+
+void    checking_access_rights(server &server, UserRequestInfo req) {
+    if (server.loc_method)
+}
 
 void handle_connection(int client_fd, running_server* server) {
     // char buffer[BUFFER_SIZE] = "\0";
     // size_t bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
     // // read(new_socket, buffer, BUFFER_SIZE);
 
+    UserRequestInfo user_request;
     char buffer[BUFFER_SIZE] = "\0";
     // memset(buffer, 0, BUFFER_SIZE);
     ssize_t bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -121,12 +134,33 @@ void handle_connection(int client_fd, running_server* server) {
         // close(client_fd);
         return;
     }
-    std::cout << bytes_read << " = bytes_read |" << buffer << "| = buffer and BUFFER_SIZE = " << BUFFER_SIZE << std::endl; 
-    if (bytes_read < BUFFER_SIZE) {
+    user_request = extract_from_buffer(buffer);
+    int config_server_index = match_against_config_domains(server, user_request);
+    if (config_server_index == -1) {
+        std::cout << "did go in if \n";
+        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>ERROR CONFIG_SERVER_INDEX RETURNED -1</h1>";
+        send(client_fd, response, strlen(response), 0);
+    } else {
+        checking_access_rights(server->subdomain[config_server_index], user_request);
+    }
+    if (user_request.domain == "/poop.com") {
         std::cout << "did go in if \n";
         const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
         send(client_fd, response, strlen(response), 0);
+    } else {
+        std::cout << "did go in if \n";
+        std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>";
+        response.append(user_request.domain + "</h1>");
+        // user_request.domain
+        // "</h1>";
+        send(client_fd, response.data(), response.size(), 0);
     }
+    // std::cout << bytes_read << " = bytes_read |" << buffer << "| = buffer and BUFFER_SIZE = " << BUFFER_SIZE << std::endl; 
+    // if (bytes_read < BUFFER_SIZE) {
+    //     std::cout << "did go in if \n";
+    //     const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
+    //     send(client_fd, response, strlen(response), 0);
+    // }
 
     close(client_fd);
 }
@@ -387,6 +421,170 @@ int main() {
 //         //             }
 //         //         }
 
+
+// GET, POST, DELETE, (HEADER)
+// use poll, epoll if need separate thread to monitor
+// int main() {
+//     // * get config 
+//     RunningServers active_servers;
+//     for (auto it = active_servers._servers.begin(); it != active_servers._servers.end(); it++) {
+//         std::cout << it->first << ": with fd: " << it->second->_socket->getSocketFd() << " has server: ";
+//         for (size_t i = 0; i < it->second->subdomain.size(); i++) {
+//             std::cout << it->second->subdomain[i].name << " = name,  ";
+//         }
+//         std::cout << std::endl;
+//     }
+
+
+//     int server_socket, client_socket;
+//     struct sockaddr_in server_addr, client_addr;
+//     socklen_t client_addr_len = sizeof(client_addr);
+//     fd_set read_fds, master_fds;
+//     int fd_max, new_fd, fd_min;
+//     char buffer[BUFFER_SIZE];
+// 	user_request_info user_info;
+
+
+
+//     FD_ZERO(&master_fds);
+// 	std::cout << "---MANUAL DEBUG HERE ---" << std::endl;
+//     FD_SET(active_servers._servers[8080]->_socket->getSocketFd(), &master_fds);
+//     FD_SET(active_servers._servers[8070]->_socket->getSocketFd(), &master_fds);
+//     fd_max = std::max(active_servers._servers[8080]->_socket->getSocketFd(), active_servers._servers[8070]->_socket->getSocketFd());
+//     fd_max = std::max(active_servers._servers[8080]->_socket->getSocketFd(), active_servers._servers[8070]->_socket->getSocketFd());
+//     fd_min = std::min(active_servers._servers[8080]->_socket->getSocketFd(), active_servers._servers[8070]->_socket->getSocketFd());
+// 	std::cout << "8080 = " << active_servers._servers[8080]->_socket->getSocketFd() << std::endl;
+// 	std::cout << "8070 = " << active_servers._servers[8070]->_socket->getSocketFd() << std::endl;
+
+//     std::cout << "Server listening on port 8080..." << std::endl;
+	
+// 	int poll_ret;
+// 	int event_index;
+//     while (true) {
+//         read_fds = master_fds;
+// 		poll_ret = poll(active_servers._track_fds.data(), active_servers._nfds, 5000);
+//         if (poll_ret < 0) {
+//             perror("poll() failed");
+//             return (1);
+//         }
+// 		event_index = 0;
+//         for (int i = 0; i < poll_ret; i++) {
+// 			if (FD_ISSET(active_servers._track_fds[event_index].fd, &read_fds)) {
+// 				while (active_servers._track_fds[event_index].revents == 0) {
+// 					event_index++;
+// 				}
+// 				if (active_servers._track_fds[event_index].revents == POLLIN) {
+// 					new_fd = accept(active_servers._track_fds[event_index].fd, (struct sockaddr *)&client_addr, &client_addr_len);
+// 					if (new_fd < 0) {
+// 						if (errno != EWOULDBLOCK) {
+// 							perror("accept failed");
+// 						}
+// 					} else {
+// 						// Set new socket to non-blocking
+// 						setNonBlocking(new_fd);
+// 						FD_SET(new_fd, &master_fds);
+// 						if (new_fd > fd_max) {
+// 							std::cout << "pushing and updating" << std::endl;
+// 							pause();
+// 							active_servers.push_and_update(new_fd);
+// 						}
+// 						std::cout << "-----UNORTHODOX BUFFER PRINT HERE -----\n" << buffer << std::endl;
+// 						simple_responce(new_fd, which_open_socket(i, active_servers._servers));
+// 						std::cout << "New connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;						
+// 					}
+// 				}
+// 				active_servers._track_fds[event_index].revents = 0;
+				
+// 			}
+
+
+
+
+
+
+
+
+
+//         //     if (FD_ISSET(i, &read_fds)) {
+
+//         //         // maybe redent
+// 		// 		std::cout << "i = " << i << std::endl;
+// 		// 		new_fd = accept(i, (struct sockaddr *)&client_addr, &client_addr_len);
+
+//         //         if (is_open_socket(i, active_servers._servers)) {
+//         //             // New connection
+// 		// 			// int nbytes = read(i, buffer, BUFFER_SIZE);
+// 		// 			// if (nbytes <= 0) {
+// 		// 			// 	std::cout << "read failed, no user info" << std::endl;
+//         //             //     if (nbytes == 0) {
+//         //             //         std::cout << "Socket " << i << " closed connection" << std::endl;
+//         //             //     } else {
+//         //             //         if (errno != EWOULDBLOCK && errno != EAGAIN) {
+//         //             //             perror("read failed");
+//         //             //         }
+//         //             //     }
+//         //             //     close(i);
+//         //             //     FD_CLR(i, &master_fds);
+// 		// 			// } else {
+// 		// 				// buffer[nbytes] = '\0';
+// 		// 			if (new_fd < 0) {
+// 		// 				if (errno != EWOULDBLOCK) {
+// 		// 					perror("accept failed");
+// 		// 				}
+// 		// 			} else {
+// 		// 				// Set new socket to non-blocking
+// 		// 				setNonBlocking(new_fd);
+// 		// 				FD_SET(new_fd, &master_fds);
+// 		// 				if (new_fd > fd_max) {
+// 		// 					active_servers.push_and_update(new_fd);
+// 		// 				}
+// 		// 				std::cout << "-----UNORTHODOX BUFFER PRINT HERE -----\n" << buffer << std::endl;
+// 		// 				simple_responce(new_fd, which_open_socket(i, active_servers._servers));
+// 		// 				std::cout << "New connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
+// 		// 			}
+// 		// 			// }
+//         //         }
+//         //         else {
+//         //             // Handle data from a client
+//         //             int nbytes = read(i, buffer, BUFFER_SIZE);
+//         //             if (nbytes <= 0) {
+//         //                 if (nbytes == 0) {
+//         //                     std::cout << "Socket " << i << " closed connection" << std::endl;
+//         //                 } else {
+//         //                     if (errno != EWOULDBLOCK && errno != EAGAIN) {
+//         //                         perror("read failed");
+//         //                     }
+//         //                 }
+//         //                 close(i);
+//         //                 FD_CLR(i, &master_fds);
+//         //             } else {
+//         //             	std::cout << "are you ever here?\n";
+//         //                 buffer[nbytes] = '\0';
+// 		// 				user_info = parse_user_buffer(buffer);
+// 		// 				// if (user_info.domain == "poop.com") {
+
+// 		// 				// } else {
+
+// 		// 				// }
+//         //                 std::cout << "Received: " << buffer << std::endl;
+//         //                 int sent = send(i, buffer, nbytes, 0);
+//         //                 if (sent < 0) {
+//         //                     if (errno != EWOULDBLOCK && errno != EAGAIN) {
+//         //                         perror("send failed");
+//         //                         close(i);
+//         //                         FD_CLR(i, &master_fds);
+//         //                     }
+//         //                 }
+//         //             }
+//         //         }
+
+
+//         //     }
+//         }
+//     }
+    
+//     return 0;
+// }
 
 //         //     }
 //         }

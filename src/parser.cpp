@@ -311,8 +311,8 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
 
 const int BACKLOG = 10;
 
-user_request_info parse_user_buffer(char *buffer) {
-	user_request_info to_return;
+UserRequestInfo extract_from_buffer(char *buffer) {
+	UserRequestInfo to_return;
 	for (auto it = to_return.methods_asked.begin(); it != to_return.methods_asked.end(); it++)
 	{
 		it->second = false;

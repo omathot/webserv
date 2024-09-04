@@ -57,7 +57,7 @@ Sec_Fetch_User,
 Priority,
 };
 
-struct user_request_info {
+struct UserRequestInfo {
 	public :
 	std::string domain;
 	std::map<method_type, bool> methods_asked;
