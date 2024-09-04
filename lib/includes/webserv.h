@@ -60,6 +60,7 @@ Priority,
 struct UserRequestInfo {
 	public :
 	std::string domain;
+	std::vector<std::string> subdomains;
 	std::map<method_type, bool> methods_asked;
 };
 

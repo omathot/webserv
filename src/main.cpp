@@ -106,8 +106,11 @@ void simple_response(long new_socket, running_server *info) {
     std::cout << "Hello message sent\n";    
 }
 
+// /tuct/aginore
+
 int match_against_config_domains(running_server* server, UserRequestInfo req) {
-    for (size_t i = 0; i != server->subdomain.size(); i++) {
+    for (size_t i = 0; i < server->subdomain.size(); i++) {
+        std::cout << server->subdomain[i].name << std::endl; 
         if (server->subdomain[i].name == req.domain) {
             return (i);
         }
@@ -116,7 +119,9 @@ int match_against_config_domains(running_server* server, UserRequestInfo req) {
 }
 
 void    checking_access_rights(server &server, UserRequestInfo req) {
-    if (server.loc_method)
+    // if (server.loc_method) {
+        
+    // }
 }
 
 void handle_connection(int client_fd, running_server* server) {
@@ -136,13 +141,13 @@ void handle_connection(int client_fd, running_server* server) {
     }
     user_request = extract_from_buffer(buffer);
     int config_server_index = match_against_config_domains(server, user_request);
-    if (config_server_index == -1) {
-        std::cout << "did go in if \n";
-        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>ERROR CONFIG_SERVER_INDEX RETURNED -1</h1>";
-        send(client_fd, response, strlen(response), 0);
-    } else {
-        checking_access_rights(server->subdomain[config_server_index], user_request);
-    }
+    // if (config_server_index == -1) {
+    //     std::cout << "did go in if \n";
+    //     const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>ERROR CONFIG_SERVER_INDEX RETURNED -1</h1>";
+    //     send(client_fd, response, strlen(response), 0);
+    // } else {
+    //     checking_access_rights(server->subdomain[config_server_index], user_request);
+    // }
     if (user_request.domain == "/poop.com") {
         std::cout << "did go in if \n";
         const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
@@ -150,11 +155,14 @@ void handle_connection(int client_fd, running_server* server) {
     } else {
         std::cout << "did go in if \n";
         std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>";
-        response.append(user_request.domain + "</h1>");
+        response.append(user_request.domain +  "</h1>");
         // user_request.domain
         // "</h1>";
         send(client_fd, response.data(), response.size(), 0);
     }
+
+
+
     // std::cout << bytes_read << " = bytes_read |" << buffer << "| = buffer and BUFFER_SIZE = " << BUFFER_SIZE << std::endl; 
     // if (bytes_read < BUFFER_SIZE) {
     //     std::cout << "did go in if \n";
@@ -237,7 +245,7 @@ int main() {
                 if (client_fd >= 0) {
                     // setNonBlocking(client_fd);   // trying blocking writing
                     // simple_response(client_fd, active_servers._servers[fd]);
-                    handle_connection(client_fd, active_servers._servers[fd]);
+                    handle_connection(client_fd, active_servers._servers[8080]);
                 }
             }
 

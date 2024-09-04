@@ -320,15 +320,28 @@ UserRequestInfo extract_from_buffer(char *buffer) {
 	
 	std::vector<std::string> split_buffer =  my_strsplit(buffer, '\n');
 	std::vector<std::string> usefull_info = my_strsplit(split_buffer[0], ' ');
-	// for (size_t i = 0; i < usefull_info.size(); i++)
-	// {
-	// 	std::cout << usefull_info[i] << std::endl;
-	// 	// if (usefull_info[i].find("GET"))
-
-
-
-	// }
-	to_return.domain = usefull_info[1];
+	for (size_t i = 0; i < usefull_info.size(); i++)
+	{
+		if (usefull_info[i].find("GET") != std::string::npos) {
+            std::cout << "GET request\n";
+            to_return.methods_asked[method_type::GET] = true;
+        }
+        if (usefull_info[i].find("POST") != std::string::npos) {
+            std::cout << "POST request\n";
+            to_return.methods_asked[method_type::POST] = true;
+        }
+        if (usefull_info[i].find("DELETE") != std::string::npos) {
+            std::cout << "DELETE request\n";
+            to_return.methods_asked[method_type::DELETE] = true;
+        }
+        if (usefull_info[i].find("HEADER") != std::string::npos) {
+            std::cout << "HEADER request\n";
+            to_return.methods_asked[method_type::HEADER] = true;
+        }
+	}
+    to_return.subdomains = my_strsplit(usefull_info[1], '/');
+	to_return.domain = to_return.subdomains[0];
+    to_return.subdomains.erase(to_return.subdomains.begin());
 	return (to_return);
 }
 
