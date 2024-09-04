@@ -106,6 +106,31 @@ void simple_response(long new_socket, running_server *info) {
     std::cout << "Hello message sent\n";    
 }
 
+
+void handle_connection(int client_fd, running_server* server) {
+    // char buffer[BUFFER_SIZE] = "\0";
+    // size_t bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
+    // // read(new_socket, buffer, BUFFER_SIZE);
+
+    char buffer[BUFFER_SIZE] = "\0";
+    // memset(buffer, 0, BUFFER_SIZE);
+    ssize_t bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
+    
+    if (bytes_read < 0) {
+        perror("recv");
+        // close(client_fd);
+        return;
+    }
+    std::cout << bytes_read << " = bytes_read |" << buffer << "| = buffer and BUFFER_SIZE = " << BUFFER_SIZE << std::endl; 
+    if (bytes_read < BUFFER_SIZE) {
+        std::cout << "did go in if \n";
+        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
+        send(client_fd, response, strlen(response), 0);
+    }
+
+    close(client_fd);
+}
+
 // maybe usefull
 void setNonBlocking(int sockfd) {
     int flags = fcntl(sockfd, F_GETFL, 0);
@@ -150,24 +175,13 @@ void	print_server_info(RunningServers active_servers) {
     }
 }
 
-void handle_connection(int client_fd, running_server* server) {
-    char buffer[BUFFER_SIZE] = {0};
-    ssize_t bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
-    
-    if (bytes_read > 0) {
-        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
-        send(client_fd, response, strlen(response), 0);
-    }
-
-    close(client_fd);
-}
-
 int main() {
     RunningServers active_servers;
-    print_server_info(active_servers);
+    // print_server_info(active_servers);
     std::cout << "Server listening on multiple ports..." << std::endl;
 
     while (true) {
+        // poll returns the number of event that have changed
         int poll_ret = poll(active_servers._track_fds.data(), active_servers._track_fds.size(), -1);
         if (poll_ret < 0) {
             perror("poll() failed");
@@ -187,7 +201,8 @@ int main() {
                 int client_fd = accept(fd, (struct sockaddr*)&client_addr, &client_addr_len);
                 
                 if (client_fd >= 0) {
-                    setNonBlocking(client_fd);
+                    // setNonBlocking(client_fd);   // trying blocking writing
+                    // simple_response(client_fd, active_servers._servers[fd]);
                     handle_connection(client_fd, active_servers._servers[fd]);
                 }
             }

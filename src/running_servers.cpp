@@ -51,7 +51,7 @@ RunningServers::~RunningServers() {
 }
 
 void	RunningServers::push_and_update(int fd) {
-	 pollfd new_pollfd = {fd, POLLIN, 0};
+	pollfd new_pollfd = {fd, POLLIN, 0};
 	_track_fds.push_back(new_pollfd);
 	_nfds = _track_fds.size();
 }
