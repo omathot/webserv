@@ -3,18 +3,17 @@
 #include <unistd.h>
 // #include "Server.h"
 #include "fcntl.h"
-# include "Parser.h"
+// # include "Parser.h"
+#include "running_servers.h"
 
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
-
 Parse *make_parse(std::ifstream &fileToRead);
 void print_parse(Parse *my_parse, int num_tab);
 void    free_parse(Parse *my_parse);
 std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf);
 std::vector<server> *make_all_server(std::ifstream &fileToRead);
-
-std::map<int, running_serveurs *> read_config() ;
+user_request_info parse_user_buffer(char *buffer);
 
 std::string getRequestInfoName(REQUEST_INFO info) {
     switch (info) {
@@ -87,7 +86,7 @@ void tester_request_convert() {
 }
 
 
-void simple_responce(long new_socket, running_serveurs *info) {
+void simple_responce(long new_socket, running_server *info) {
     long server_fd;
     char buffer[BUFFER_SIZE] = {0};
     const char *hello_message = 
@@ -121,16 +120,16 @@ void setNonBlocking(int sockfd) {
     }
 }
 
-bool is_open_socket(int i, std::map<int, running_serveurs *> config_content) {
+bool is_open_socket(int i, std::map<int, running_server *> config_content) {
     for (auto it = config_content.begin(); it != config_content.end(); it++) {
         if (i == it->second->_socket->getSocketFd())
-            return true;
+            return (true);
     }
-    return false;
+    return (false);
 }
 
 
-running_serveurs *which_open_socket(int i, std::map<int, running_serveurs *> config_content) {
+running_server *which_open_socket(int i, std::map<int, running_server *> config_content) {
     for (auto it = config_content.begin(); it != config_content.end(); it++) {
         if (i == it->second->_socket->getSocketFd())
             return it->second;
@@ -142,11 +141,11 @@ running_serveurs *which_open_socket(int i, std::map<int, running_serveurs *> con
 // use poll, epoll if need separate thread to monitor
 int main() {
     // * get config 
-    std::map<int, running_serveurs *>  config_content = read_config();
-    for (auto it = config_content.begin(); it != config_content.end(); it++) {
+    RunningServers active_servers;
+    for (auto it = active_servers._servers.begin(); it != active_servers._servers.end(); it++) {
         std::cout << it->first << ": with fd: " << it->second->_socket->getSocketFd() << " has server: ";
-        for (size_t i = 0; i < it->second->mini_server.size(); i++) {
-            std::cout << it->second->mini_server[i].name << " = name,  ";
+        for (size_t i = 0; i < it->second->subdomain.size(); i++) {
+            std::cout << it->second->subdomain[i].name << " = name,  ";
         }
         std::cout << std::endl;
     }
@@ -158,76 +157,144 @@ int main() {
     fd_set read_fds, master_fds;
     int fd_max, new_fd, fd_min;
     char buffer[BUFFER_SIZE];
+	user_request_info user_info;
 
 
 
     FD_ZERO(&master_fds);
-    FD_SET(config_content[8080]->_socket->getSocketFd(), &master_fds);
-    FD_SET(config_content[8070]->_socket->getSocketFd(), &master_fds);
-    fd_max = std::max(config_content[8080]->_socket->getSocketFd(), config_content[8070]->_socket->getSocketFd());
-    fd_min = std::min(config_content[8080]->_socket->getSocketFd(), config_content[8070]->_socket->getSocketFd());
+	std::cout << "---MANUAL DEBUG HERE ---" << std::endl;
+    FD_SET(active_servers._servers[8080]->_socket->getSocketFd(), &master_fds);
+    FD_SET(active_servers._servers[8070]->_socket->getSocketFd(), &master_fds);
+    fd_max = std::max(active_servers._servers[8080]->_socket->getSocketFd(), active_servers._servers[8070]->_socket->getSocketFd());
+    fd_max = std::max(active_servers._servers[8080]->_socket->getSocketFd(), active_servers._servers[8070]->_socket->getSocketFd());
+    fd_min = std::min(active_servers._servers[8080]->_socket->getSocketFd(), active_servers._servers[8070]->_socket->getSocketFd());
+	std::cout << "8080 = " << active_servers._servers[8080]->_socket->getSocketFd() << std::endl;
+	std::cout << "8070 = " << active_servers._servers[8070]->_socket->getSocketFd() << std::endl;
 
     std::cout << "Server listening on port 8080..." << std::endl;
-
+	
+	int poll_ret;
+	int event_index;
     while (true) {
         read_fds = master_fds;
-        if (select(fd_max + 1, &read_fds, NULL, NULL, NULL) < 0) {
-            perror("select failed");
-            return 1;
+		poll_ret = poll(active_servers._track_fds.data(), active_servers._nfds, 5000);
+        if (poll_ret < 0) {
+            perror("poll() failed");
+            return (1);
         }
-
-        for (int i = fd_min; i <= fd_max; ++i) {
-            if (FD_ISSET(i, &read_fds)) {
-
-                // maybe redent
-                if (is_open_socket(i, config_content)) {
-                    // New connection
-                    new_fd = accept(i, (struct sockaddr *)&client_addr, &client_addr_len);
-                    if (new_fd < 0) {
-                        if (errno != EWOULDBLOCK) {
-                            perror("accept failed");
-                        }
-                    } else {
-                        // Set new socket to non-blocking
-                        setNonBlocking(new_fd);
-                        FD_SET(new_fd, &master_fds);
-                        if (new_fd > fd_max) {
-                            fd_max = new_fd;
-                        }
-                        simple_responce(new_fd, which_open_socket(i, config_content));
-                        std::cout << "New connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
-                    }
-                }
-                else {
-                    std::cout << "are you ever here?\n";
-                    // Handle data from a client
-                    int nbytes = read(i, buffer, BUFFER_SIZE);
-                    if (nbytes <= 0) {
-                        if (nbytes == 0) {
-                            std::cout << "Socket " << i << " closed connection" << std::endl;
-                        } else {
-                            if (errno != EWOULDBLOCK && errno != EAGAIN) {
-                                perror("read failed");
-                            }
-                        }
-                        close(i);
-                        FD_CLR(i, &master_fds);
-                    } else {
-                        buffer[nbytes] = '\0';
-                        std::cout << "Received: " << buffer << std::endl;
-                        int sent = send(i, buffer, nbytes, 0);
-                        if (sent < 0) {
-                            if (errno != EWOULDBLOCK && errno != EAGAIN) {
-                                perror("send failed");
-                                close(i);
-                                FD_CLR(i, &master_fds);
-                            }
-                        }
-                    }
-                }
+		event_index = 0;
+        for (int i = 0; i < poll_ret; i++) {
+			if (FD_ISSET(active_servers._track_fds[event_index].fd, &read_fds)) {
+				while (active_servers._track_fds[event_index].revents == 0) {
+					event_index++;
+				}
+				if (active_servers._track_fds[event_index].revents == POLLIN) {
+					new_fd = accept(active_servers._track_fds[event_index].fd, (struct sockaddr *)&client_addr, &client_addr_len);
+					if (new_fd < 0) {
+						if (errno != EWOULDBLOCK) {
+							perror("accept failed");
+						}
+					} else {
+						// Set new socket to non-blocking
+						setNonBlocking(new_fd);
+						FD_SET(new_fd, &master_fds);
+						if (new_fd > fd_max) {
+							std::cout << "pushing and updating" << std::endl;
+							pause();
+							active_servers.push_and_update(new_fd);
+						}
+						std::cout << "-----UNORTHODOX BUFFER PRINT HERE -----\n" << buffer << std::endl;
+						simple_responce(new_fd, which_open_socket(i, active_servers._servers));
+						std::cout << "New connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;						
+					}
+				}
+				active_servers._track_fds[event_index].revents = 0;
+				
+			}
 
 
-            }
+
+
+
+
+
+
+
+        //     if (FD_ISSET(i, &read_fds)) {
+
+        //         // maybe redent
+		// 		std::cout << "i = " << i << std::endl;
+		// 		new_fd = accept(i, (struct sockaddr *)&client_addr, &client_addr_len);
+
+        //         if (is_open_socket(i, active_servers._servers)) {
+        //             // New connection
+		// 			// int nbytes = read(i, buffer, BUFFER_SIZE);
+		// 			// if (nbytes <= 0) {
+		// 			// 	std::cout << "read failed, no user info" << std::endl;
+        //             //     if (nbytes == 0) {
+        //             //         std::cout << "Socket " << i << " closed connection" << std::endl;
+        //             //     } else {
+        //             //         if (errno != EWOULDBLOCK && errno != EAGAIN) {
+        //             //             perror("read failed");
+        //             //         }
+        //             //     }
+        //             //     close(i);
+        //             //     FD_CLR(i, &master_fds);
+		// 			// } else {
+		// 				// buffer[nbytes] = '\0';
+		// 			if (new_fd < 0) {
+		// 				if (errno != EWOULDBLOCK) {
+		// 					perror("accept failed");
+		// 				}
+		// 			} else {
+		// 				// Set new socket to non-blocking
+		// 				setNonBlocking(new_fd);
+		// 				FD_SET(new_fd, &master_fds);
+		// 				if (new_fd > fd_max) {
+		// 					active_servers.push_and_update(new_fd);
+		// 				}
+		// 				std::cout << "-----UNORTHODOX BUFFER PRINT HERE -----\n" << buffer << std::endl;
+		// 				simple_responce(new_fd, which_open_socket(i, active_servers._servers));
+		// 				std::cout << "New connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
+		// 			}
+		// 			// }
+        //         }
+        //         else {
+        //             // Handle data from a client
+        //             int nbytes = read(i, buffer, BUFFER_SIZE);
+        //             if (nbytes <= 0) {
+        //                 if (nbytes == 0) {
+        //                     std::cout << "Socket " << i << " closed connection" << std::endl;
+        //                 } else {
+        //                     if (errno != EWOULDBLOCK && errno != EAGAIN) {
+        //                         perror("read failed");
+        //                     }
+        //                 }
+        //                 close(i);
+        //                 FD_CLR(i, &master_fds);
+        //             } else {
+        //             	std::cout << "are you ever here?\n";
+        //                 buffer[nbytes] = '\0';
+		// 				user_info = parse_user_buffer(buffer);
+		// 				// if (user_info.domain == "poop.com") {
+
+		// 				// } else {
+
+		// 				// }
+        //                 std::cout << "Received: " << buffer << std::endl;
+        //                 int sent = send(i, buffer, nbytes, 0);
+        //                 if (sent < 0) {
+        //                     if (errno != EWOULDBLOCK && errno != EAGAIN) {
+        //                         perror("send failed");
+        //                         close(i);
+        //                         FD_CLR(i, &master_fds);
+        //                     }
+        //                 }
+        //             }
+        //         }
+
+
+        //     }
         }
     }
     

@@ -2,7 +2,7 @@
 #VARIABLES
 
 NAME 	:= webserv
-SRC 	:= main.cpp parser.cpp
+SRC 	:= main.cpp parser.cpp running_servers.cpp
 SUBDIR	:= srcs/
 SRCS	:= $(addprefix $(SUBDIR),$(SRC))
 OBJ 	:= $(SRCS:.c=.o)
@@ -33,7 +33,7 @@ RESET	:= \033[0m
 
 all : 
 #		 g++ -fsanitize=address -g src/main.cpp src/parser.cpp
-		g++ -std=c++11 -g src/main.cpp src/parser.cpp src/Socket.cpp
+		g++ -std=c++11 -g src/running_servers.cpp src/main.cpp src/parser.cpp src/Socket.cpp
 
 # all	: $(NAME)
 # 		@echo "$(GREEN)Project built successfully !$(RESET)"

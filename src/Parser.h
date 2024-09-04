@@ -6,6 +6,13 @@
 # include "Socket.h"
 
 
+enum method_type {
+    GET,
+    POST,
+    DELETE,
+    HEADER,
+};
+
 struct method_path_option {
     public:
         std::string path;
@@ -40,16 +47,6 @@ struct Parse
     std::map<std::string, std::string> basic;
     std::vector<Parse *> servers;
     std::string loc_name;
-};
-
-
-struct running_serveurs
-{
-    ServerSocket *_socket;
-    // long fd;
-    // sockaddr_in _socket;
-    std::vector<server> mini_server;
-    int socke_size;
 };
 
 

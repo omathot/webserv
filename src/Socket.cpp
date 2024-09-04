@@ -1,6 +1,8 @@
 #include "Socket.h"
 #include "unistd.h"
 
+void setNonBlocking(int sockfd);
+
 const int BACKLOG = 10;
 
 ServerSocket::ServerSocket(int domain, int service, int protocol, int port, u_long interface) {
@@ -10,7 +12,6 @@ ServerSocket::ServerSocket(int domain, int service, int protocol, int port, u_lo
 		perror("failed _sock_fd");
 		exit(EXIT_FAILURE);
 	}
-
 
 	// define address structure
 	this->_address.sin_family = domain;
@@ -26,13 +27,15 @@ ServerSocket::ServerSocket(int domain, int service, int protocol, int port, u_lo
         exit(EXIT_FAILURE);
     }
 
-
+	
 	// serverside, so bind() (connect for client)
 	if (bind(_sock_fd, (struct sockaddr *)&_address, sizeof(_address)) < 0) {
         perror("bind failed");
         close(_sock_fd);
         exit(EXIT_FAILURE);
     }
+
+	setNonBlocking(_sock_fd);
 
 	// listen on bound socket
 	if (listen(_sock_fd, BACKLOG) < 0) {

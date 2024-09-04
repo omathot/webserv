@@ -32,16 +32,8 @@
 # include <netinet/in.h>
 
 # include <poll.h>
+# include "../../src/Parser.h"
 // # include <sys/epoll.h>
-
-
-
-enum method_type {
-    GET,
-    POST,
-    DELETE,
-    HEADER,
-};
 
 
 
@@ -63,6 +55,12 @@ Sec_Fetch_Mode,
 Sec_Fetch_Site,
 Sec_Fetch_User,
 Priority,
+};
+
+struct user_request_info {
+	public :
+	std::string domain;
+	std::map<method_type, bool> methods_asked;
 };
 
 

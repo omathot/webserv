@@ -1,5 +1,5 @@
 #include "../lib/includes/webserv.h"
-#include "Parser.h"
+// #include "Parser.h"
 
 bool is_all_space(std::string str) {
     int i = 0;
@@ -311,65 +311,25 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
 
 const int BACKLOG = 10;
 
-
-std::map<int, running_serveurs *> read_config() {
-    std::ifstream inputFile("src/config/default.conf");
-    if (!inputFile.is_open()) {
-        std::cerr << "Error opening config file" << std::endl;
-        exit(1);
-    }
-    std::vector<server> *servers = make_all_server(inputFile);
-    std::vector<int> ports;
-    std::map<int, running_serveurs *> running;
-    for (int x = 0; x < servers->size(); x++) {
-        bool is_in = false;
-        for (size_t i = 0; i < ports.size(); i++)
-        {
-            if (ports[i] == (*servers)[x].port)
-                is_in = true;
-        }
-        if (!is_in)
-            ports.push_back((*servers)[x].port);
-    }
-
-    for (int x = 0; x < ports.size(); x++) {
-        running_serveurs *in_making = new running_serveurs;
-        in_making->_socket = new ServerSocket(AF_INET, SOCK_STREAM, 0, ports[x], INADDR_ANY);
+user_request_info parse_user_buffer(char *buffer) {
+	user_request_info to_return;
+	for (auto it = to_return.methods_asked.begin(); it != to_return.methods_asked.end(); it++)
+	{
+		it->second = false;
+	}
+	
+	std::vector<std::string> split_buffer =  my_strsplit(buffer, '\n');
+	std::vector<std::string> usefull_info = my_strsplit(split_buffer[0], ' ');
+	// for (size_t i = 0; i < usefull_info.size(); i++)
+	// {
+	// 	std::cout << usefull_info[i] << std::endl;
+	// 	// if (usefull_info[i].find("GET"))
 
 
-        // in_making->_socket.sin_family = AF_INET;
-        // in_making->_socket.sin_port = htons(ports[x]);
-        // in_making->_socket.sin_addr.s_addr = INADDR_ANY;
-        // in_making->socke_size = sizeof(in_making->_socket);
-        
-        // if ((in_making->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        //     perror("socket failed");
-        //     exit(EXIT_FAILURE);
-        // }
 
-        // // std::cout << ports[x];
-        // int temp = bind(in_making->fd, (struct sockaddr*)&((*in_making)._socket), in_making->socke_size);
-        // if (temp < 0) {
-        //     perror("bind failed");
-        //     close(in_making->fd);
-        //     exit(EXIT_FAILURE);
-        // }
-        // std::cout << "test\n";
-        // if (listen(in_making->fd, BACKLOG) < 0) {
-        //     perror("listen");
-        //     close(in_making->fd);
-        //     exit(EXIT_FAILURE);
-        // }
-
-        for (int i = 0; i <= servers->size(); i++) {
-            if ((*servers)[i].port == ports[x]) {
-                in_making->mini_server.push_back((*servers)[i]);
-            }
-        }
-        running[ports[x]] = in_making;
-    }
-    inputFile.close();
-    return (running);
+	// }
+	to_return.domain = usefull_info[1];
+	return (to_return);
 }
 
 
