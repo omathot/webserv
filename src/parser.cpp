@@ -314,12 +314,13 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
 const int BACKLOG = 10;
 
 UserRequestInfo extract_from_buffer(char *buffer) {
+    // * check format of protocol
 	UserRequestInfo to_return;
 	for (auto it = to_return.methods_asked.begin(); it != to_return.methods_asked.end(); it++)
 	{
 		it->second = false;
 	}
-	
+	std::cout << "|============|\n" << buffer <<  "|============|\n";
 	std::vector<std::string> split_buffer =  my_strsplit(buffer, '\n');
 	std::vector<std::string> usefull_info = my_strsplit(split_buffer[0], ' ');
 	for (size_t i = 0; i < usefull_info.size(); i++)
@@ -344,6 +345,12 @@ UserRequestInfo extract_from_buffer(char *buffer) {
     std::cout << usefull_info[1] << std::endl; 
     to_return.subdomains = my_strsplit(usefull_info[1], '/');
 	to_return.domain = to_return.subdomains[0];
+    // std::string last_sub_domain_name = to_return.subdomains[to_return.subdomains.size() - 1];
+    // std::cout << last_sub_domain_name << "\n";
+    // if (last_sub_domain_name[last_sub_domain_name.size() - 1] == '/') {
+    //     std::cout << "did remove\n";
+    //     to_return.subdomains[to_return.subdomains.size() - 1].pop_back();
+    // }
     to_return.subdomains.erase(to_return.subdomains.begin());
 	return (to_return);
 }
