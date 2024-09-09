@@ -1,5 +1,4 @@
 #include "../lib/includes/webserv.h"
-#include <cstring>
 #include <unistd.h>
 // #include "Server.h"
 #include "fcntl.h"
@@ -14,6 +13,7 @@ void    free_parse(Parse *my_parse);
 std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf);
 std::vector<server> *make_all_server(std::ifstream &fileToRead);
 UserRequestInfo extract_from_buffer(char *buffer);
+void error_responce(int client_fd);
 
 std::string getRequestInfoName(REQUEST_INFO info) {
     switch (info) {
@@ -123,19 +123,27 @@ int match_against_config_domains(running_server* server, UserRequestInfo req) {
 
 
 
-void    checking_access_rights(server &server, UserRequestInfo req) {
+int    match_against_config_path(server &server, UserRequestInfo req) {
+    size_t cur_size_read = 0;
+    size_t total_size_read = 0;
+    if (req.subdomains.empty()) {
+        return (-2);
+    }
     for (size_t i = 0; i < server.loc_method.size(); i++)
     {
-        // can optimise this
-        if (server.loc_method[i].path.find(req.domain) != std::string::npos) {
-            
-            // for (size_t j = 0; j < req.subdomains.size(); j++) {
-            //     if (server.loc_method[j].path)
-                 
-            // }
+        for (size_t j = 0; j < req.subdomains.size(); j++) {
+            cur_size_read = server.loc_method[i].path.find(req.subdomains[j]);
+            if (cur_size_read == std::string::npos) {
+                break ; // super break
+            }
+            total_size_read += cur_size_read + req.subdomains[j].size();
         }
+        std::cout << server.loc_method[i].path << " = path, subdomains =  " << req.subdomains[0] << "\n";  
+        std::cout << total_size_read << " = total_size_read, req.subdomains.size() = " << server.loc_method[i].path.size() << "\n"; 
+        if (total_size_read == server.loc_method[i].path.size())
+            return (i);
     }
-    responce_error(130);
+    return (-1);
 }
 
 void handle_connection(int client_fd, running_server* server) {
@@ -156,24 +164,26 @@ void handle_connection(int client_fd, running_server* server) {
     user_request = extract_from_buffer(buffer);
     int config_server_index = match_against_config_domains(server, user_request);
     if (config_server_index == -1) {
+        error_responce(client_fd);
+        return ;
+    }
+    int config_path_index = match_against_config_path(server->subdomain[config_server_index], user_request);
+    if (config_path_index == -1) {
+        error_responce(client_fd);
+        return ;
+    }
+    if (user_request.domain == "/poop.com") {
         std::cout << "did go in if \n";
-        const char* response = "HTTP/1.1 404 KO\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>ERROR CONFIG_SERVER_INDEX RETURNED </h1>";
+        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
         send(client_fd, response, strlen(response), 0);
     } else {
-        checking_access_rights(server->subdomain[config_server_index], user_request);
+        std::cout << "did go in if \n";
+        std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>";
+        response.append(user_request.domain +  "</h1>");
+        // user_request.domain
+        // "</h1>";
+        send(client_fd, response.data(), response.size(), 0);
     }
-    // if (user_request.domain == "/poop.com") {
-    //     std::cout << "did go in if \n";
-    //     const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
-    //     send(client_fd, response, strlen(response), 0);
-    // } else {
-    //     std::cout << "did go in if \n";
-    //     std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>";
-    //     response.append(user_request.domain +  "</h1>");
-    //     // user_request.domain
-    //     // "</h1>";
-    //     send(client_fd, response.data(), response.size(), 0);
-    // }
 
 
 
