@@ -2,9 +2,11 @@
 
 std::vector<server > *make_all_server(std::ifstream &fileToRead);
 std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf);
+const char *config_loc = "config/default.conf";
+
 
 RunningServers::RunningServers() {
-	std::ifstream inputFile("src/config/default.conf");
+	std::ifstream inputFile(config_loc);
     if (!inputFile.is_open()) {
         std::cerr << "Error opening config file" << std::endl;
         exit(1);

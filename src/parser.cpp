@@ -290,6 +290,26 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
     return to_return;
 }
 
+void trim_spaces_semi(std::string &str) {
+    size_t start_trim = 0;
+    size_t end_trim = 0;
+    size_t i;
+    for (i = 0; i < str.size(); i++) {
+        if (!isspace(str[i])) {
+            break ;
+        }
+    }
+    start_trim = i;
+    for (size_t i = str.size(); i > 0; i--) {
+        if (!isspace(str[i]) && str[i] != ';') {
+            break ;
+        }
+    }
+    end_trim = i;
+    str.erase(0, start_trim);
+    str.erase(str.size() - end_trim + 1, end_trim);
+}
+
 std::vector<server > *make_all_server(std::ifstream &fileToRead) {
     Parse *parser = make_parse(fileToRead);
     std::string useless;
@@ -300,6 +320,7 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.port = std::stoi((parser->servers[i]->basic)["listen"]);
         temp.name = (parser->servers[i]->basic)["server_name"];
         temp.root = (parser->servers[i]->basic)["root"];
+        trim_spaces_semi(temp.root);
         temp.uploads_dir = (parser->servers[i]->basic)["uploads_dir"];
         temp.autoindex = parser->servers[i]->basic["autoindex"].find("on");
         temp.error_pages = treat_error_pages(parser->servers[i]->basic["error_page"]);

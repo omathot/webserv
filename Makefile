@@ -1,56 +1,34 @@
-#---------------------------------
-#VARIABLES
+SRCS			= error_responce.cpp running_servers.cpp main.cpp parser.cpp Socket.cpp handle_connection.cpp
 
-NAME 	:= webserv
-SRC 	:= main.cpp parser.cpp running_servers.cpp handle_connection.cpp
-SUBDIR	:= srcs/
-SRCS	:= $(addprefix $(SUBDIR),$(SRC))
-OBJ 	:= $(SRCS:.c=.o)
-CMP		:= c++
-FLAGS 	:= -Werror -Wall -Wextra -g -I lib
+SRCSPATH		= src/
+BINPATH			= bin/
 
-#---------------------------------
-#FORMATTING AND FUN
+OBJS			= $(addprefix $(BINPATH), $(SRCS:.cpp=.o))
 
-clear_line = \033[K
-move_up = \033[A
-define prettycomp
-	@printf "$(1)$(clear_line)\n"
-	@$(1)
-	@printf "$(move_up)"
-endef
+CC				= c++
+CFLAGS			=  -I. -fsanitize=address # -Wall -Wextra -Werror
 
-RED		:= \033[31m
-GREEN 	:= \033[32m
-YELLOW	:= \033[33m
-BLUE	:= \033[38;5;87m
-MAGENTA := \033[35m
-CYAN	:= \033[36m
-RESET	:= \033[0m
+NAME			=	webserver
 
-#---------------------------------
-#RULES
+all:			$(NAME)
 
-all : 
-#		 g++ -fsanitize=address -g src/main.cpp src/parser.cpp
-		g++ -std=c++11 -g src/error_responce.cpp src/running_servers.cpp src/main.cpp src/parser.cpp src/Socket.cpp src/handle_connection.cpp
+$(NAME):		$(OBJS)
+				$(CC) $(CFLAGS) $(OBJS) -o $(NAME) 	
 
-# all	: $(NAME)
-# 		@echo "$(GREEN)Project built successfully !$(RESET)"
-# 		@echo "$(BLUE)Usage: ./cub3d <map>$(RESET)"
+$(BINPATH)%.o: $(SRCSPATH)%.cpp | $(BINPATH)
+				$(CC) $(CFLAGS) -c $< -o $@
 
-$(NAME) : $(OBJ)
-		@$(CC) $(FLAGS) $(OSFLAGS) $(OBJ) -o $(NAME)
+$(BINPATH):
+				@mkdir -p $(BINPATH)
 
-%.o : %.cpp
-		$(CMP) -c $(FLAGS) -o $@ $<
+clean:
+				@rm -f $(OBJS) $(OBJS_BONUS) test_demo
+				@rm -rf $(BINPATH)
 
-clean :
-		@rm -f $(OBJ)
+fclean:			clean
+				@rm -f $(NAME)
 
-fclean :
-		@rm -f $(NAME) $(OBJ)
+re:				fclean all
 
-re : fclean all
+.PHONY:			all clean fclean re bonus
 
-.PHONY : clean fclean re hardclean

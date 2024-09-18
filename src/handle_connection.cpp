@@ -6,7 +6,7 @@
 #include "running_servers.h"
 
 UserRequestInfo extract_from_buffer(char *buffer);
-std::string get_error_responce();
+std::string get_error_responce(int code);
 
 
 int match_against_config_domains(running_server* server, UserRequestInfo req) {
@@ -75,11 +75,43 @@ int is_method_allowed(UserRequestInfo &user_request, method_path_option cur_path
     return (-1);
 }
 
-std::string handle_single_connetion(UserRequestInfo &user_request, method_path_option cur_path, std::string root) {
-    std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>Google.com</h1>";
-    if (is_method_allowed(user_request, cur_path) != 0) {
-        response = get_error_responce();
+std::string make_header_responce(int status_code, int content_type, int content_lenght) {
+    std::string header = "HTTP/1.1";
+    if (status_code == 200) {
+        header.append(" 200 OK\r\n");
     }
+    else {
+        return (get_error_responce(status_code));
+    }
+    if (content_type == 0) {
+        header.append("Content-Type: text/html\r\n");
+    }
+    std::stringstream buffer;
+    buffer << "Content-Length: " << content_lenght << "\r\n\r\n";
+    header.append(buffer.str());
+    return header;
+}
+
+std::string handle_single_connetion(UserRequestInfo &user_request, method_path_option cur_path, std::string root) {
+    std::string response;
+    if (is_method_allowed(user_request, cur_path) != 0) {
+        response = get_error_responce(366);
+        return response;
+    }
+    std::string path = root + "/index.html"; 
+    std::fstream index(path);
+    std::cout <<"|" <<path<<"|" << std::endl;
+    std::string content_responce;
+    std::string line;
+    if (!index.is_open()) {
+        response = get_error_responce(685);
+        return response;
+    }
+    while (std::getline(index, line)) {
+        content_responce.append(line);
+    }
+    response = make_header_responce(200, 0, content_responce.size());
+    response.append(content_responce);
     return response;
 }
 
