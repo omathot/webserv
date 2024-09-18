@@ -260,7 +260,10 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             std::cin >> temp;
         }
         methot_temp.path = method[i]->loc_name;
-        methot_temp.path.erase(methot_temp.path.size() - 2,methot_temp.path.size());
+        methot_temp.path.erase(methot_temp.path.size() - 2, 2);
+        if (methot_temp.path[methot_temp.path.size() - 1] == '/') {
+            methot_temp.path.erase(methot_temp.path.size() - 1, 1);
+        }
         if (!method[i]->basic["alias"].empty()) {
             methot_temp.alias = method[i]->basic["alias"];
         }

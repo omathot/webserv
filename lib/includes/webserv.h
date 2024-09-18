@@ -36,7 +36,7 @@
 # include "../../src/Parser.h"
 // # include <sys/epoll.h>
 
-
+// struct Parse;
 
 std::vector<std::string> my_strsplit(std::string src, char delemiter);
 
@@ -65,7 +65,10 @@ struct UserRequestInfo {
 	std::map<method_type, bool> methods_asked;
 };
 
-void responce_error(int code);
+void error_response(int client_fd);
+
+const int BUFFER_SIZE = 1024;
+
 
 
 # define DEFAULT_CONFIG ".src/config/default.conf"
