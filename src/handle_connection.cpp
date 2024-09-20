@@ -6,7 +6,7 @@
 #include "running_servers.h"
 
 UserRequestInfo extract_from_buffer(char *buffer);
-std::string get_error_responce(int code);
+std::string get_error_response(int code);
 
 
 int match_against_config_domains(running_server* server, UserRequestInfo req) {
@@ -83,7 +83,7 @@ std::string make_header_responce(int status_code, int content_type, int content_
         header.append(" 200 OK\r\n");
     }
     else {
-        return (get_error_responce(status_code));
+        return (get_error_response(status_code));
     }
     if (content_type == 0) {
         header.append("Content-Type: text/html\r\n");
@@ -97,7 +97,7 @@ std::string make_header_responce(int status_code, int content_type, int content_
 std::string handle_single_connetion(UserRequestInfo &user_request, method_path_option &cur_path, std::string &root) {
     std::string response;
     if (is_method_allowed(user_request, cur_path) != 0) {
-        response = get_error_responce(366);
+        response = get_error_response(366);
         return response;
     }
     std::string path = root + "/index.html"; 
@@ -106,7 +106,26 @@ std::string handle_single_connetion(UserRequestInfo &user_request, method_path_o
     std::string content_responce;
     std::string line;
     if (!index.is_open()) {
-        response = get_error_responce(685);
+        response = get_error_response(685);
+        return response;
+    }
+    while (std::getline(index, line)) {
+        content_responce.append(line);
+    }
+    response = make_header_responce(200, 0, content_responce.size());
+    response.append(content_responce);
+    return response;
+}
+
+std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request, std::string &root) {
+    std::string response;
+    std::string path = root + "/index.html"; 
+    std::fstream index(path);
+    std::cout <<"|" <<path<<"|" << std::endl;
+    std::string content_responce;
+    std::string line;
+    if (!index.is_open()) {
+        response = get_error_response(685);
         return response;
     }
     while (std::getline(index, line)) {
@@ -120,7 +139,7 @@ std::string handle_single_connetion(UserRequestInfo &user_request, method_path_o
 std::string handle_single_redirection(UserRequestInfo &user_request, method_path_option &cur_path, std::string &redirection) {
     std::string response;
     if (is_method_allowed(user_request, cur_path) != 0) {
-        response = get_error_responce(366);
+        response = get_error_response(366);
         return response;
     }
     std::string temp = "HTTP/1.1 301 Moved Permanently\r\nLocation: ";
@@ -172,8 +191,9 @@ void handle_connection(int client_fd, running_server* server) {
     }
 
     if (config_path_index == -2) {
-        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>no sub domain path</h1>";
-        send(client_fd, response, strlen(response), 0);
+        std::string temp = "/home/omathot/dev/codam/webserv_sam";
+        response = handle_single_connection_no_subdomain(user_request, temp);
+        send(client_fd, response.data(), response.size(), 0);
     }
     else if (!server->subdomain[config_server_index].loc_method[config_path_index].path.empty()) {
         // std::cout << "path in sub is |" << server->subdomain[config_server_index].loc_method[config_path_index].path << "|\n";  
@@ -187,7 +207,7 @@ void handle_connection(int client_fd, running_server* server) {
                     server->subdomain[config_server_index].loc_method[config_path_index],
                     server->subdomain[config_server_index].redirect);
         else
-            response = get_error_responce(698);
+            response = get_error_response(698);
         send(client_fd, response.data(), response.size(), 0);
     }
     else if (user_request.domain == "/poop.com") {

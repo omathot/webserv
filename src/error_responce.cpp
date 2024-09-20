@@ -1,11 +1,11 @@
 # include "../lib/includes/webserv.h"
 
 
-void responce_error(int code) {
+void response_error(int code) {
     std::cout << code <<  " = code | responce_error\n";
 }
 
-std::string get_error_responce(int code) {
+std::string get_error_response(int code) {
     std::stringstream buffer;
     buffer << "<h1>ERROR CONFIG_SERVER_INDEX RETURNED: " << code << " </h1>";
     std::string message = buffer.str();
@@ -17,7 +17,7 @@ std::string get_error_responce(int code) {
 void error_response(int client_fd) {
     // * make it actualy response base on curent situation 
     std::cout << "did go in error response \n";
-    std::string response = get_error_responce(404);
+    std::string response = get_error_response(404);
     send(client_fd, response.data(), response.size(), 0);
     std::cout << "finished error response \n";
     close(client_fd);
