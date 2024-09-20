@@ -45,13 +45,15 @@ int    match_against_config_path(server &server, UserRequestInfo req) {
         }
         std::cout << server.loc_method[i].path << " = path, subdomains =  " << req.subdomains[0] << "\n";  
         std::cout << total_size_read << " = total_size_read, req.subdomains.size() = " << server.loc_method[i].path.size() << "\n"; 
-        if (total_size_read == 25) {
+        if (total_size_read == 24) {
             std::cout << std::endl << server.loc_method[i].path << std::endl;
             for (size_t j = 0; j < req.subdomains.size(); j++) {
                 std::cout << req.subdomains[j];
             }
             std::cout << std::endl;
         }
+        if (total_size_read == server.loc_method[i].path.size() - 1 && server.loc_method[i].path[server.loc_method[i].path.size() - 1] == '/')
+            total_size_read++;
         if (total_size_read == server.loc_method[i].path.size())
             return (i);
     }
@@ -92,7 +94,7 @@ std::string make_header_responce(int status_code, int content_type, int content_
     return header;
 }
 
-std::string handle_single_connetion(UserRequestInfo &user_request, method_path_option cur_path, std::string root) {
+std::string handle_single_connetion(UserRequestInfo &user_request, method_path_option &cur_path, std::string &root) {
     std::string response;
     if (is_method_allowed(user_request, cur_path) != 0) {
         response = get_error_responce(366);
@@ -115,6 +117,22 @@ std::string handle_single_connetion(UserRequestInfo &user_request, method_path_o
     return response;
 }
 
+std::string handle_single_redirection(UserRequestInfo &user_request, method_path_option &cur_path, std::string &redirection) {
+    std::string response;
+    if (is_method_allowed(user_request, cur_path) != 0) {
+        response = get_error_responce(366);
+        return response;
+    }
+    std::string temp = "HTTP/1.1 301 Moved Permanently\r\nLocation: ";
+    temp.append(redirection);
+    // temp.append("\r\n");
+    std::cout << temp << "|\n";
+    // response = make_header_responce(301, 0, temp.size());
+    // response.append(temp);
+    return (temp);
+}
+
+
 
 void handle_connection(int client_fd, running_server* server) {
     // char buffer[BUFFER_SIZE] = "\0";
@@ -123,6 +141,7 @@ void handle_connection(int client_fd, running_server* server) {
 
     UserRequestInfo user_request;
     char buffer[BUFFER_SIZE] = "\0";
+    std::string response;
     // memset(buffer, 0, BUFFER_SIZE);
     // * check body size| compare  with buffer size (MAX BUFFER)
     ssize_t bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -159,9 +178,16 @@ void handle_connection(int client_fd, running_server* server) {
     else if (!server->subdomain[config_server_index].loc_method[config_path_index].path.empty()) {
         // std::cout << "path in sub is |" << server->subdomain[config_server_index].loc_method[config_path_index].path << "|\n";  
         // const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>Google.com</h1>";
-        std::string response = handle_single_connetion(user_request, 
-                server->subdomain[config_server_index].loc_method[config_path_index],
-                server->subdomain[config_server_index].root);
+        if (!server->subdomain[config_server_index].index.empty())
+            response = handle_single_connetion(user_request, 
+                    server->subdomain[config_server_index].loc_method[config_path_index],
+                    server->subdomain[config_server_index].root);
+        else if (!server->subdomain[config_server_index].redirect.empty())
+            response = handle_single_redirection(user_request, 
+                    server->subdomain[config_server_index].loc_method[config_path_index],
+                    server->subdomain[config_server_index].redirect);
+        else
+            response = get_error_responce(698);
         send(client_fd, response.data(), response.size(), 0);
     }
     else if (user_request.domain == "/poop.com") {

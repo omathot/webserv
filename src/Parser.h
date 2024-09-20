@@ -35,6 +35,7 @@ struct server
     bool autoindex;
     std::map<int, std::string> error_pages;
     std::string index;
+    std::string redirect;
     std::string access_log;
     std::string error_log;
     std::vector<method_path_option> loc_method;

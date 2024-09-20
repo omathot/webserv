@@ -6,7 +6,7 @@ BINPATH			= bin/
 OBJS			= $(addprefix $(BINPATH), $(SRCS:.cpp=.o))
 
 CC				= c++
-CFLAGS			=  -I. -fsanitize=address # -Wall -Wextra -Werror
+CFLAGS			=  -I. -fsanitize=address -g # -Wall -Wextra -Werror
 
 NAME			=	webserver
 

@@ -248,6 +248,26 @@ std::map<int, std::string> treat_error_pages(std::string all) {
     return to_return;
 }
 
+void trim_spaces_semi(std::string &str) {
+    size_t start_trim = 0;
+    size_t end_trim = 0;
+    size_t i;
+    for (i = 0; i < str.size(); i++) {
+        if (!isspace(str[i])) {
+            break ;
+        }
+    }
+    start_trim = i;
+    for (i = str.size() - 1; i > 0; i--) {
+        if (!(isspace(str[i]) || str[i] == ';')) {
+            break ;
+        }
+    }
+    end_trim = i;
+    str.erase(end_trim + 1, end_trim);
+    str.erase(0, start_trim);
+}
+
 std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, bool autoindex) {
     std::vector<method_path_option> to_return;
     method_path_option methot_temp;
@@ -260,10 +280,10 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             std::cin >> temp;
         }
         methot_temp.path = method[i]->loc_name;
-        methot_temp.path.erase(methot_temp.path.size() - 2, 2);
-        if (methot_temp.path[methot_temp.path.size() - 1] == '/') {
+        if (methot_temp.path[methot_temp.path.size() - 1] == '{')
             methot_temp.path.erase(methot_temp.path.size() - 1, 1);
-        }
+        trim_spaces_semi(methot_temp.path);
+        std::cout << methot_temp.path << "|\n";
         if (!method[i]->basic["alias"].empty()) {
             methot_temp.alias = method[i]->basic["alias"];
         }
@@ -290,25 +310,6 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
     return to_return;
 }
 
-void trim_spaces_semi(std::string &str) {
-    size_t start_trim = 0;
-    size_t end_trim = 0;
-    size_t i;
-    for (i = 0; i < str.size(); i++) {
-        if (!isspace(str[i])) {
-            break ;
-        }
-    }
-    start_trim = i;
-    for (size_t i = str.size(); i > 0; i--) {
-        if (!isspace(str[i]) && str[i] != ';') {
-            break ;
-        }
-    }
-    end_trim = i;
-    str.erase(0, start_trim);
-    str.erase(str.size() - end_trim + 1, end_trim);
-}
 
 std::vector<server > *make_all_server(std::ifstream &fileToRead) {
     Parse *parser = make_parse(fileToRead);
@@ -321,6 +322,12 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.name = (parser->servers[i]->basic)["server_name"];
         temp.root = (parser->servers[i]->basic)["root"];
         trim_spaces_semi(temp.root);
+        temp.redirect = (parser->servers[i]->basic)["redirect"];
+        if (!temp.redirect.empty()) {
+            std::cout << temp.redirect << "|\n";
+            trim_spaces_semi(temp.redirect);
+            std::cout << temp.redirect << "|\n";
+        }
         temp.uploads_dir = (parser->servers[i]->basic)["uploads_dir"];
         temp.autoindex = parser->servers[i]->basic["autoindex"].find("on");
         temp.error_pages = treat_error_pages(parser->servers[i]->basic["error_page"]);
