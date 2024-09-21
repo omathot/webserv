@@ -1,4 +1,4 @@
-#pragma once
+// #pragma once
 
 #ifndef PARSER_H
 # define PARSER_H
@@ -15,6 +15,7 @@ enum method_type {
 
 struct method_path_option {
     public:
+        std::string redirection;
         std::string path;
         std::string alias;
         bool autoindex;

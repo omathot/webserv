@@ -283,7 +283,7 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
         if (methot_temp.path[methot_temp.path.size() - 1] == '{')
             methot_temp.path.erase(methot_temp.path.size() - 1, 1);
         trim_spaces_semi(methot_temp.path);
-        std::cout << methot_temp.path << "|\n";
+        // std::cout << methot_temp.path << "|\n";
         if (!method[i]->basic["alias"].empty()) {
             methot_temp.alias = method[i]->basic["alias"];
         }
@@ -305,6 +305,11 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             methot_temp.method_type_allowed[DELETE] = false;
             methot_temp.method_type_allowed[HEADER] = false;
         }
+        if (!method[i]->basic["redirect"].empty()) {
+            std::cout << method[i]->basic["redirect"] << "|\n";
+            methot_temp.redirection = method[i]->basic["redirect"];
+            trim_spaces_semi(methot_temp.redirection);
+        }
         to_return.push_back(methot_temp);
     }
     return to_return;
@@ -324,9 +329,9 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         trim_spaces_semi(temp.root);
         temp.redirect = (parser->servers[i]->basic)["redirect"];
         if (!temp.redirect.empty()) {
-            std::cout << temp.redirect << "|\n";
+            // std::cout << temp.redirect << "|\n";
             trim_spaces_semi(temp.redirect);
-            std::cout << temp.redirect << "|\n";
+            // std::cout << temp.redirect << "|\n";
         }
         temp.uploads_dir = (parser->servers[i]->basic)["uploads_dir"];
         temp.autoindex = parser->servers[i]->basic["autoindex"].find("on");

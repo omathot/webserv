@@ -138,10 +138,10 @@ std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request,
 
 std::string handle_single_redirection(UserRequestInfo &user_request, method_path_option &cur_path, std::string &redirection) {
     std::string response;
-    if (is_method_allowed(user_request, cur_path) != 0) {
-        response = get_error_response(366);
-        return response;
-    }
+    // if (is_method_allowed(user_request, cur_path) != 0) {
+    //     response = get_error_response(366);
+    //     return response;
+    // }
     std::string temp = "HTTP/1.1 301 Moved Permanently\r\nLocation: ";
     temp.append(redirection);
     // temp.append("\r\n");
@@ -178,27 +178,33 @@ void handle_connection(int client_fd, running_server* server) {
     int config_server_index = match_against_config_domains(server, user_request);
     if (config_server_index == -1) {
         std::cout << "match_against_config_domains failed\n";
-
-        error_response(client_fd);
+        response = get_error_response(943);
+        send(client_fd, response.data(), response.size(), 0);
         return ;
     }
     std::cout << "match_against_config_path\n";
     int config_path_index = match_against_config_path(server->subdomain[config_server_index], user_request);
     if (config_path_index == -1) {
         std::cout << "match_against_config_path failed\n";
-        error_response(client_fd);
-        return ;
+        response = get_error_response(903);
     }
-
-    if (config_path_index == -2) {
-        std::string temp = "/home/omathot/dev/codam/webserv_sam";
-        response = handle_single_connection_no_subdomain(user_request, temp);
-        send(client_fd, response.data(), response.size(), 0);
+    else if (config_path_index == -2) {
+        if (server->subdomain[config_server_index].root.empty()) {
+            response = get_error_response(973);
+        } else {
+            response = handle_single_connection_no_subdomain(user_request,
+                    server->subdomain[config_server_index].root);
+            // send(client_fd, response.data(), response.size(), 0);
+        }
     }
     else if (!server->subdomain[config_server_index].loc_method[config_path_index].path.empty()) {
         // std::cout << "path in sub is |" << server->subdomain[config_server_index].loc_method[config_path_index].path << "|\n";  
         // const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>Google.com</h1>";
-        if (!server->subdomain[config_server_index].index.empty())
+        if (!server->subdomain[config_server_index].loc_method[config_path_index].redirection.empty()) {
+            response = handle_single_redirection(user_request, 
+                    server->subdomain[config_server_index].loc_method[config_path_index],
+                    server->subdomain[config_server_index].loc_method[config_path_index].redirection);
+        } else if (!server->subdomain[config_server_index].index.empty())
             response = handle_single_connetion(user_request, 
                     server->subdomain[config_server_index].loc_method[config_path_index],
                     server->subdomain[config_server_index].root);
@@ -208,19 +214,9 @@ void handle_connection(int client_fd, running_server* server) {
                     server->subdomain[config_server_index].redirect);
         else
             response = get_error_response(698);
-        send(client_fd, response.data(), response.size(), 0);
     }
-    else if (user_request.domain == "/poop.com") {
-        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
-        send(client_fd, response, strlen(response), 0);
-    } else {
-        std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>";
-        response.append(user_request.domain +  "</h1>");
-        // user_request.domain
-        // "</h1>";
-        send(client_fd, response.data(), response.size(), 0);
-    }
-
+    std::cout << response << "|" << std::endl;
+    send(client_fd, response.data(), response.size(), 0);
     std::cout << "\n\n\n";
     // ! the random segfault happens afater this point 
 
