@@ -12,6 +12,7 @@ RunningServers::RunningServers() {
         exit(1);
     }
     std::vector<server> *servers = make_all_server(inputFile);
+    // std::cout << "stest" << std::endl;
     std::vector<int> ports;
     std::map<int, running_server *> running;
     for (int x = 0; x < servers->size(); x++) {

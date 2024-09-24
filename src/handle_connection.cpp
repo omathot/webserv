@@ -4,6 +4,7 @@
 #include "fcntl.h"
 // # include "Parser.h"
 #include "running_servers.h"
+#include <filesystem>
 
 UserRequestInfo extract_from_buffer(char *buffer);
 std::string get_error_response(int code);
@@ -94,13 +95,13 @@ std::string make_header_responce(int status_code, int content_type, int content_
     return header;
 }
 
-std::string handle_single_connetion(UserRequestInfo &user_request, method_path_option &cur_path, std::string &root) {
+std::string handle_single_connetion(UserRequestInfo &user_request, method_path_option &cur_path, std::string &root, std::string html_page) {
     std::string response;
     if (is_method_allowed(user_request, cur_path) != 0) {
         response = get_error_response(366);
         return response;
     }
-    std::string path = root + "/index.html"; 
+    std::string path = root + "/" + html_page; 
     std::fstream index(path);
     std::cout <<"|" <<path<<"|" << std::endl;
     std::string content_responce;
@@ -117,9 +118,9 @@ std::string handle_single_connetion(UserRequestInfo &user_request, method_path_o
     return response;
 }
 
-std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request, std::string &root) {
+std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request, std::string &root, std::string html_page) {
     std::string response;
-    std::string path = root + "/index.html"; 
+    std::string path = root + "/" + html_page; 
     std::fstream index(path);
     std::cout <<"|" <<path<<"|" << std::endl;
     std::string content_responce;
@@ -136,13 +137,16 @@ std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request,
     return response;
 }
 
-std::string handle_single_redirection(UserRequestInfo &user_request, method_path_option &cur_path, std::string &redirection) {
+std::string handle_single_redirection(int ret_val, UserRequestInfo &user_request, method_path_option &cur_path, std::string &redirection) {
     std::string response;
     // if (is_method_allowed(user_request, cur_path) != 0) {
     //     response = get_error_response(366);
     //     return response;
     // }
-    std::string temp = "HTTP/1.1 301 Moved Permanently\r\nLocation: ";
+    std::string temp = "HTTP/1.1 ";
+    temp.append(std::to_string(ret_val));
+    temp.append(" Moved Permanently\r\nLocation: ");
+    // 301 "Moved Permanently\r\nLocation: ";
     temp.append(redirection);
     // temp.append("\r\n");
     std::cout << temp << "|\n";
@@ -151,6 +155,29 @@ std::string handle_single_redirection(UserRequestInfo &user_request, method_path
     return (temp);
 }
 
+
+std::vector<std::string> get_all_server_files(std::string root) {
+    std::vector<std::string> vec;
+    for (const auto & entry : std::filesystem::directory_iterator(root)) {
+        std::cout << entry.path() << std::endl;
+        vec.push_back(entry.path().filename().string());
+    }
+    return vec;
+}
+
+std::string check_server_root_files(server &server, UserRequestInfo &user_request) {
+    std::vector<std::string> vec = get_all_server_files(server.root);
+    for (auto &file: vec) {
+        if (file == user_request.subdomains.back()) {
+            return file;
+            // if (server.root.back() == '/')
+            //     return (server.root + file);
+            // else 
+            //     return (server.root + "/" + file);
+        }
+    }
+    return ("NULL");
+}
 
 
 void handle_connection(int client_fd, running_server* server) {
@@ -186,32 +213,51 @@ void handle_connection(int client_fd, running_server* server) {
     int config_path_index = match_against_config_path(server->subdomain[config_server_index], user_request);
     if (config_path_index == -1) {
         std::cout << "match_against_config_path failed\n";
-        response = get_error_response(903);
+        std::string temp = check_server_root_files(server->subdomain[config_server_index], user_request);
+        if (temp == "NULL")
+            response = get_error_response(903);
+        else {
+            std::cout << temp << std::endl;
+            response = handle_single_connection_no_subdomain(user_request,
+                    server->subdomain[config_server_index].root, temp);
+        }
     }
     else if (config_path_index == -2) {
         if (server->subdomain[config_server_index].root.empty()) {
             response = get_error_response(973);
-        } else {
+        } 
+        else if (!server->subdomain[config_server_index].redirect.empty)
+            response = handle_single_redirection(
+                    server->subdomain[config_server_index].redirect.retValue,
+                    user_request, 
+                    server->subdomain[config_server_index].loc_method[config_path_index],
+                    server->subdomain[config_server_index].redirect.path);
+        else {
             response = handle_single_connection_no_subdomain(user_request,
-                    server->subdomain[config_server_index].root);
+                    server->subdomain[config_server_index].root, server->subdomain[config_server_index].index);
             // send(client_fd, response.data(), response.size(), 0);
         }
     }
     else if (!server->subdomain[config_server_index].loc_method[config_path_index].path.empty()) {
         // std::cout << "path in sub is |" << server->subdomain[config_server_index].loc_method[config_path_index].path << "|\n";  
         // const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>Google.com</h1>";
-        if (!server->subdomain[config_server_index].loc_method[config_path_index].redirection.empty()) {
-            response = handle_single_redirection(user_request, 
+        if (!server->subdomain[config_server_index].loc_method[config_path_index].redirection.empty) {
+            response = handle_single_redirection(
+                    server->subdomain[config_server_index].loc_method[config_path_index].redirection.retValue,
+                    user_request,
                     server->subdomain[config_server_index].loc_method[config_path_index],
-                    server->subdomain[config_server_index].loc_method[config_path_index].redirection);
+                    server->subdomain[config_server_index].loc_method[config_path_index].redirection.path);
         } else if (!server->subdomain[config_server_index].index.empty())
             response = handle_single_connetion(user_request, 
                     server->subdomain[config_server_index].loc_method[config_path_index],
-                    server->subdomain[config_server_index].root);
-        else if (!server->subdomain[config_server_index].redirect.empty())
-            response = handle_single_redirection(user_request, 
+                    server->subdomain[config_server_index].root,
+                    server->subdomain[config_server_index].index);
+        else if (!server->subdomain[config_server_index].redirect.empty)
+            response = handle_single_redirection(
+                    server->subdomain[config_server_index].redirect.retValue,
+                    user_request, 
                     server->subdomain[config_server_index].loc_method[config_path_index],
-                    server->subdomain[config_server_index].redirect);
+                    server->subdomain[config_server_index].redirect.path);
         else
             response = get_error_response(698);
     }

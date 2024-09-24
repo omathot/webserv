@@ -4,7 +4,7 @@
 # define PARSER_H
 #include "../lib/includes/webserv.h"
 # include "Socket.h"
-
+#include "ConfigComponent.h"
 
 enum method_type {
     GET,
@@ -15,7 +15,7 @@ enum method_type {
 
 struct method_path_option {
     public:
-        std::string redirection;
+        ConfigComponent redirection;
         std::string path;
         std::string alias;
         bool autoindex;
@@ -36,7 +36,7 @@ struct server
     bool autoindex;
     std::map<int, std::string> error_pages;
     std::string index;
-    std::string redirect;
+    ConfigComponent redirect;
     std::string access_log;
     std::string error_log;
     std::vector<method_path_option> loc_method;

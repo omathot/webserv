@@ -1,6 +1,9 @@
 #include "../lib/includes/webserv.h"
 // #include "Parser.h"
 
+#include "ConfigComponent.h"
+#include <string>
+
 bool is_all_space(std::string str) {
     int i = 0;
     while (str[i])
@@ -306,15 +309,36 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             methot_temp.method_type_allowed[HEADER] = false;
         }
         if (!method[i]->basic["redirect"].empty()) {
-            std::cout << method[i]->basic["redirect"] << "|\n";
-            methot_temp.redirection = method[i]->basic["redirect"];
-            trim_spaces_semi(methot_temp.redirection);
+            std::cout << method[i]->basic["redirect"] << "|" << std::endl;
+            // methot_temp.redirection = method[i]->basic["redirect"];
+            trim_spaces_semi(method[i]->basic["redirect"]);
+            
+            methot_temp.redirection = build_config_component(method[i]->basic["redirect"]);
         }
         to_return.push_back(methot_temp);
     }
     return to_return;
 }
 
+ConfigComponent build_config_component(std::string &str) {
+    ConfigComponent component;
+    std::string buff;
+    std::istringstream stream(str);
+    std::getline(stream, buff, ' ');
+    std::cout << buff << std::endl;
+    try {
+        component.retValue = std::stoi(buff);    
+    } catch (...) {
+        std::cout << "ConfigComponent could not build int" <<std::endl;
+    }
+    
+    std::getline(stream, buff, ' ');
+    std::cout << buff << std::endl;
+
+    component.path = buff;
+    component.empty = false;
+    return (component);
+}
 
 std::vector<server > *make_all_server(std::ifstream &fileToRead) {
     Parse *parser = make_parse(fileToRead);
@@ -327,18 +351,23 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.name = (parser->servers[i]->basic)["server_name"];
         temp.root = (parser->servers[i]->basic)["root"];
         trim_spaces_semi(temp.root);
-        temp.redirect = (parser->servers[i]->basic)["redirect"];
-        if (!temp.redirect.empty()) {
+        if (!(parser->servers[i]->basic)["redirect"].empty()) {
             // std::cout << temp.redirect << "|\n";
-            trim_spaces_semi(temp.redirect);
+            trim_spaces_semi((parser->servers[i]->basic)["redirect"]);
+            temp.redirect = build_config_component((parser->servers[i]->basic)["redirect"]);
             // std::cout << temp.redirect << "|\n";
         }
+        else 
+            temp.redirect.empty = true;
         temp.uploads_dir = (parser->servers[i]->basic)["uploads_dir"];
         temp.autoindex = parser->servers[i]->basic["autoindex"].find("on");
         temp.error_pages = treat_error_pages(parser->servers[i]->basic["error_page"]);
         // std::cout << "did one errorpage\n";
         // std::cin >> useless;
         temp.index = parser->servers[i]->basic["index"];
+        if (!temp.index.empty())
+            trim_spaces_semi(temp.index);
+
         temp.access_log = parser->servers[i]->basic["access_log"];
         temp.error_log = parser->servers[i]->basic["error_log"];
         temp.loc_method = treat_loc_method(parser->servers[i]->servers, temp.autoindex);
