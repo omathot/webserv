@@ -60,9 +60,10 @@ enum REQUEST_INFO {
 
 struct UserRequestInfo {
 	public :
-	std::string domain;
-	std::vector<std::string> subdomains;
-	std::map<method_type, bool> methods_asked;
+		std::string domain;
+		std::vector<std::string> subdomains;
+		std::map<method_type, bool> methods_asked;
+		std::string body;
 };
 
 void error_response(int client_fd);

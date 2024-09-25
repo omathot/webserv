@@ -182,6 +182,7 @@ int main() {
                     // simple_response(client_fd, active_servers._servers[fd]);
                     handle_connection(client_fd, active_servers._servers[active_servers._fd_to_port[fd]]);
                 }
+                std::cout << "true end of comunication" << std::endl;
             }
 
             if (active_servers._track_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {

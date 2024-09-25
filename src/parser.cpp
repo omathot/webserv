@@ -315,6 +315,8 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             
             methot_temp.redirection = build_config_component(method[i]->basic["redirect"]);
         }
+        else 
+            methot_temp.redirection.empty = true;
         to_return.push_back(methot_temp);
     }
     return to_return;
@@ -325,7 +327,7 @@ ConfigComponent build_config_component(std::string &str) {
     std::string buff;
     std::istringstream stream(str);
     std::getline(stream, buff, ' ');
-    std::cout << buff << std::endl;
+    // std::cout << buff << std::endl;
     try {
         component.retValue = std::stoi(buff);    
     } catch (...) {
@@ -333,7 +335,7 @@ ConfigComponent build_config_component(std::string &str) {
     }
     
     std::getline(stream, buff, ' ');
-    std::cout << buff << std::endl;
+    // std::cout << buff << std::endl;
 
     component.path = buff;
     component.empty = false;
@@ -352,7 +354,7 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.root = (parser->servers[i]->basic)["root"];
         trim_spaces_semi(temp.root);
         if (!(parser->servers[i]->basic)["redirect"].empty()) {
-            // std::cout << temp.redirect << "|\n";
+            std::cout << (parser->servers[i]->basic)["redirect"] << "|\n";
             trim_spaces_semi((parser->servers[i]->basic)["redirect"]);
             temp.redirect = build_config_component((parser->servers[i]->basic)["redirect"]);
             // std::cout << temp.redirect << "|\n";
@@ -378,15 +380,38 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
 
 const int BACKLOG = 10;
 
+std::vector<std::string> splitString(const std::string& str, const std::string& delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = str.find(delimiter);
+
+    while (end != std::string::npos) {
+        tokens.push_back(str.substr(start, end - start));
+        start = end + delimiter.length();
+        end = str.find(delimiter, start);
+    }
+    tokens.push_back(str.substr(start));
+
+    return tokens;
+}
+
 UserRequestInfo extract_from_buffer(char *buffer) {
-    // * check format of protocol
+
+    // std::istringstream iss(buffer);
 	UserRequestInfo to_return;
+    // std::string arg;
+
+
+    // * check format of protocol
 	for (auto it = to_return.methods_asked.begin(); it != to_return.methods_asked.end(); it++)
 	{
 		it->second = false;
 	}
-	std::cout << "|============|\n" << buffer <<  "|============|\n";
-	std::vector<std::string> split_buffer =  my_strsplit(buffer, '\n');
+	// std::cout << "|buffer=|" << buffer <<  "|============|\n";
+	std::vector<std::string> split_buffer =  splitString(buffer, "\r\n");
+    // std::string split_buffer;
+    // std::string delemiter = "\r\n";
+    // std::getline(iss, split_buffer, delemiter);
 	std::vector<std::string> usefull_info = my_strsplit(split_buffer[0], ' ');
 	for (size_t i = 0; i < usefull_info.size(); i++)
 	{
@@ -398,16 +423,16 @@ UserRequestInfo extract_from_buffer(char *buffer) {
             std::cout << "POST request\n";
             to_return.methods_asked[method_type::POST] = true;
         }
-        if (usefull_info[i].find("DELETE") != std::string::npos) {
-            std::cout << "DELETE request\n";
-            to_return.methods_asked[method_type::DELETE] = true;
-        }
-        if (usefull_info[i].find("HEADER") != std::string::npos) {
-            std::cout << "HEADER request\n";
-            to_return.methods_asked[method_type::HEADER] = true;
-        }
+        // if (usefull_info[i].find("DELETE") != std::string::npos) {
+        //     std::cout << "DELETE request\n";
+        //     to_return.methods_asked[method_type::DELETE] = true;
+        // }
+        // if (usefull_info[i].find("HEADER") != std::string::npos) {
+        //     std::cout << "HEADER request\n";
+        //     to_return.methods_asked[method_type::HEADER] = true;
+        // }
 	}
-    std::cout << usefull_info[1] << std::endl; 
+    // std::cout << usefull_info[1] << std::endl; 
     to_return.subdomains = my_strsplit(usefull_info[1], '/');
 	to_return.domain = to_return.subdomains[0];
     // std::string last_sub_domain_name = to_return.subdomains[to_return.subdomains.size() - 1];
@@ -417,6 +442,9 @@ UserRequestInfo extract_from_buffer(char *buffer) {
     //     to_return.subdomains[to_return.subdomains.size() - 1].pop_back();
     // }
     to_return.subdomains.erase(to_return.subdomains.begin());
+    // if (usefull_info[usefull_info.size() - 2])
+    to_return.body = split_buffer.back(); 
+    // std::cout << split_buffer[split_buffer.size() - 1] << "|||||||||" << std::endl;
 	return (to_return);
 }
 

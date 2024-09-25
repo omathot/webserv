@@ -26,7 +26,7 @@
 <body>
     <h1>HTML HTTP Requests Demo</h1>
 
-    <form action="https://localhost:8080/test.com/testing" method="get">
+    <form action="http://localhost:8070/yeaha.com/testing" method="get">
         <h2>GET Request</h2>
         <label for="get-param">Parameter:</label>
         <input type="text" id="get-param" name="param" value="test">
@@ -34,7 +34,7 @@
         <input type="submit" value="Send GET Request">
     </form>
 
-    <form action="https://localhost:8080/test.com/testing" method="post">
+    <form action="http://localhost:8070/yeaha.com/testing" method="post">
         <h2>POST Request</h2>
         <label for="post-title">Title:</label>
         <input type="text" id="post-title" name="title" value="foo">
@@ -48,7 +48,7 @@
         <input type="submit" value="Send POST Request">
     </form>
 
-    <form action="https://localhost:8080/test.com/testing" method="post">
+    <form action="http://localhost:8070/yeaha.com/testing" method="post">
         <h2>DELETE Request (Simulated)</h2>
         <p>Note: HTML forms cannot directly make DELETE requests. This form simulates a DELETE request using POST.</p>
         <input type="hidden" name="_method" value="DELETE">
