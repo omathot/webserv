@@ -1,4 +1,4 @@
-SRCS			= error_responce.cpp running_servers.cpp main.cpp parser.cpp Socket.cpp handle_connection.cpp
+SRCS			= error_responce.cpp running_servers.cpp main.cpp parser.cpp Socket.cpp handle_connection.cpp Request.cpp
 
 SRCSPATH		= src/
 BINPATH			= bin/
@@ -6,7 +6,7 @@ BINPATH			= bin/
 OBJS			= $(addprefix $(BINPATH), $(SRCS:.cpp=.o))
 
 CC				= c++
-CFLAGS			=  -I. -g -std=c++17 #-fsanitize=address # -Wall -Wextra -Werror 
+CFLAGS			=  -I. -g -std=c++17 -fsanitize=address # -Wall -Wextra -Werror 
 
 NAME			=	webserver
 

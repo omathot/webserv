@@ -449,3 +449,44 @@ UserRequestInfo extract_from_buffer(char *buffer) {
 }
 
 
+
+std::string methodTypeToString(method_type t) {
+    switch (t) {
+    case GET:
+        return ("GET");
+    case POST:
+        return ("POST");
+    case DELETE:
+        return ("DELETE");
+    case HEADER:
+        return ("HEADER");
+    }
+    return ("error");
+}
+
+std::string identifyContentType(std::string s) { //potentially add method
+    size_t i = s.find_last_of('.');
+
+    std::string sub = s.substr(i + 1);
+    const std::map<std::string, std::string> types = {
+        { "css", "text/css; charset=UTF-8" },
+        { "js", "text/javascript; charset=UTF-8" },
+        { "html", "text/html; charset=UTF-8" },
+        { "htm", "text/html; charset=UTF-8" },
+        { "csv", "text/csv" },
+        { "png", "image/png" },
+        { "jpeg", "image/jpeg" },
+        { "gif", "image/gif" },
+        { "ico", "image/x-icon" },
+    };
+
+    auto it = types.find(sub);
+    if (it != types.end()) {
+        return it->second;
+    }
+    // if (method == "POST")
+    //     return proutprout
+
+    return ("error");
+
+}

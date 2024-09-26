@@ -1,10 +1,14 @@
 #include "../lib/includes/webserv.h"
+#include <sstream>
+#include <string>
 #include <unistd.h>
 // #include "Server.h"
 #include "fcntl.h"
 // # include "Parser.h"
 #include "running_servers.h"
 #include <filesystem>
+#include <chrono>
+#include "Request.h"
 
 UserRequestInfo extract_from_buffer(char *buffer);
 std::string get_error_response(int code);
@@ -84,23 +88,60 @@ int is_method_allowed(UserRequestInfo &user_request, method_path_option &cur_pat
     return (-1);
 }
 
-std::string make_header_response(int status_code, int content_type, int content_lenght) {
-    std::string header = "HTTP/1.1";
-    if (status_code == 200) {
-        header.append(" 200 OK\r\n");
-    }
-    else {
-        header.append(" " + std::to_string(status_code) +" OK\r\n");
-        // return (get_error_response(status_code));
-    }
-    if (content_type == 0) {
-        header.append("Content-Type: text/html\r\n");
-    }
-    std::stringstream buffer;
-    buffer << "Content-Length: " << content_lenght << "\r\n\r\n";
-    header.append(buffer.str());
-    return header;
+std::string make_header_response(int c, method_type m, std::string s, size_t size) {
+    std::cout << "---MAKING HEADER RESPONSE---" << std::endl;
+    Request req = Request(c, s, m);
+    std::cout << "just made req" << std::endl;
+    auto now = std::chrono::system_clock::now();
+    auto now_c = std::chrono::system_clock::to_time_t(now);
+    std::ostringstream oss; 
+
+    std::cout << "Making code" << std::endl;
+    std::string code = std::to_string(c) + " Ok\r\n";
+
+    std::cout << "Making method" << std::endl;
+    std::string method = req.getMethod() + "\r\n";;
+    
+    std::cout << "Making date" << std::endl;
+    std::string date = std::to_string(now_c) + "\r\n";
+
+    std::cout << "making content_type" << std::endl;
+    std::string content_type = req.getContentType() + "\r\n";
+    std::string message = req.getMessage();
+    oss << "HTTP/1.1 ";
+    // add if statement to decide if code Ok or Err
+    oss << code;
+
+    // oss << date;
+    oss << "Content-Length: ";
+    oss << content_type;
+    oss << "Connection close" << "\r\n";
+    oss << "\r\n";
+
+    // req.setResponse(oss.str());
+    std::cout << "(" << oss.str() << ")";
+    return (oss.str());
+
 }
+
+
+// this was make_header before     
+//     std::string header = "HTTP/1.1";
+//     if (status_code == 200) {
+//         header.append(" 200 OK\r\n");
+//     }
+//     else {
+//         header.append(" " + std::to_string(status_code) +" OK\r\n");
+//         // return (get_error_response(status_code));
+//     }
+//     if (content_type == 0) {
+//         header.append("Content-Type: text/html\r\n");
+//     }
+//     std::stringstream buffer;
+//     buffer << "Content-Length: " << content_lenght << "\r\n\r\n";
+//     header.append(buffer.str());
+//     return header;
+// }
 
 std::string handle_single_connetion(UserRequestInfo &user_request, method_path_option &cur_path, std::string &root, std::string html_page) {
     std::string response;
@@ -116,7 +157,7 @@ std::string handle_single_connetion(UserRequestInfo &user_request, method_path_o
     while (std::getline(index, line)) {
         content_responce.append(line);
     }
-    response = make_header_response(200, 0, content_responce.size());
+    response = make_header_response(200, method_type::GET, user_request.subdomains.back(),  content_responce.size());
     response.append(content_responce);
     return response;
 }
@@ -136,7 +177,7 @@ std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request,
     while (std::getline(index, line)) {
         content_responce.append(line);
     }
-    response = make_header_response(200, 0, content_responce.size());
+    response = make_header_response(200, GET,  user_request.subdomains.back(), content_responce.size());
     response.append(content_responce);
     return response;
 }
@@ -247,14 +288,14 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
 
 void handle_post_request(int client_fd, server &server, UserRequestInfo &user_request) {
     std::string temp = "<h1>Post resquest Denied</h1>";
-    std::string response = make_header_response(403, 0, temp.size());
+    std::string response = make_header_response(403, POST, user_request.subdomains.back(),  temp.size());
     response.append(temp);
     send(client_fd, response.data(), response.size(), 0);
 }
 
 void handle_del_request(int client_fd, server &server, UserRequestInfo &user_request) {
     std::string temp = "<h1>Delete resquest Denied</h1>";
-    std::string response = make_header_response(403, 0, temp.size());
+    std::string response = make_header_response(403, DELETE, user_request.subdomains.back(), temp.size());
     response.append(temp);
     send(client_fd, response.data(), response.size(), 0);
 }
