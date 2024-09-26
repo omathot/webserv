@@ -84,7 +84,7 @@ int is_method_allowed(UserRequestInfo &user_request, method_path_option &cur_pat
     return (-1);
 }
 
-std::string make_header_responce(int status_code, int content_type, int content_lenght) {
+std::string make_header_response(int status_code, int content_type, int content_lenght) {
     std::string header = "HTTP/1.1";
     if (status_code == 200) {
         header.append(" 200 OK\r\n");
@@ -116,7 +116,7 @@ std::string handle_single_connetion(UserRequestInfo &user_request, method_path_o
     while (std::getline(index, line)) {
         content_responce.append(line);
     }
-    response = make_header_responce(200, 0, content_responce.size());
+    response = make_header_response(200, 0, content_responce.size());
     response.append(content_responce);
     return response;
 }
@@ -136,7 +136,7 @@ std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request,
     while (std::getline(index, line)) {
         content_responce.append(line);
     }
-    response = make_header_responce(200, 0, content_responce.size());
+    response = make_header_response(200, 0, content_responce.size());
     response.append(content_responce);
     return response;
 }
@@ -154,7 +154,7 @@ std::string handle_single_redirection(int ret_val, UserRequestInfo &user_request
     temp.append(redirection);
     // temp.append("\r\n");
     std::cout << temp << "|\n";
-    // response = make_header_responce(301, 0, temp.size());
+    // response = make_header_response(301, 0, temp.size());
     // response.append(temp);
     return (temp);
 }
@@ -217,27 +217,26 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
     else if (!server.loc_method[config_path_index].path.empty()) {
         // std::cout << "path in sub is |" << server->subdomain[config_server_index].loc_method[config_path_index].path << "|\n";  
         // const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\n<h1>Google.com</h1>";
-        if (is_method_allowed(user_request, server.loc_method[config_path_index]) != 0) {
-            std::cout << "match_against_config_domains failed 2" << std::endl;
-            std::string response = get_error_response(366);
-        }
-        else if (!server.loc_method[config_path_index].redirection.empty) {
+        if (!server.loc_method[config_path_index].redirection.empty) {
             response = handle_single_redirection(
                     server.loc_method[config_path_index].redirection.retValue,
                     user_request,
                     server.loc_method[config_path_index],
                     server.loc_method[config_path_index].redirection.path);
-        } else if (!server.index.empty())
-            response = handle_single_connetion(user_request, 
-                    server.loc_method[config_path_index],
-                    server.root,
-                    server.index);
-        else if (!server.redirect.empty)
+        } else if (!server.redirect.empty)
             response = handle_single_redirection(
                     server.redirect.retValue,
                     user_request, 
                     server.loc_method[config_path_index],
                     server.redirect.path);
+        else if (is_method_allowed(user_request, server.loc_method[config_path_index]) != 0) {
+            std::cout << "match_against_config_domains failed 2" << std::endl;
+            std::string response = get_error_response(366);
+        } else if (!server.index.empty())
+            response = handle_single_connetion(user_request, 
+                    server.loc_method[config_path_index],
+                    server.root,
+                    server.index);
         else
             response = get_error_response(698);
     }
@@ -248,14 +247,14 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
 
 void handle_post_request(int client_fd, server &server, UserRequestInfo &user_request) {
     std::string temp = "<h1>Post resquest Denied</h1>";
-    std::string response = make_header_responce(403, 0, temp.size());
+    std::string response = make_header_response(403, 0, temp.size());
     response.append(temp);
     send(client_fd, response.data(), response.size(), 0);
 }
 
 void handle_del_request(int client_fd, server &server, UserRequestInfo &user_request) {
     std::string temp = "<h1>Delete resquest Denied</h1>";
-    std::string response = make_header_responce(403, 0, temp.size());
+    std::string response = make_header_response(403, 0, temp.size());
     response.append(temp);
     send(client_fd, response.data(), response.size(), 0);
 }

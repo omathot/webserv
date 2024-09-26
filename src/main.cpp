@@ -159,7 +159,7 @@ int main() {
 
     while (true) {
         // poll returns the number of event that have changed
-        int poll_ret = poll(active_servers._track_fds.data(), active_servers._track_fds.size(), -1);
+        int poll_ret = poll(active_servers._track_fds.data(), active_servers._track_fds.size(), 3000); // 3 second time out
         if (poll_ret < 0) {
             perror("poll() failed");
             return (1);
