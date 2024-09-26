@@ -297,6 +297,7 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             methot_temp.autoindex = method[i]->basic["autoindex"].find("on") != std::string::npos;
         }
         if (!method[i]->basic["allow"].empty()) {
+            // std::cout << methot_temp.path << "|| " << method[i]->basic["allow"] << std::endl; 
             methot_temp.method_type_allowed[GET] = (method[i]->basic["allow"]).find("GET") != std::string::npos;
             methot_temp.method_type_allowed[POST] = (method[i]->basic["allow"]).find("POST") != std::string::npos;
             methot_temp.method_type_allowed[DELETE] = (method[i]->basic["allow"]).find("DELETE") != std::string::npos;

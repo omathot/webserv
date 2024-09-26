@@ -8,6 +8,7 @@
 
 UserRequestInfo extract_from_buffer(char *buffer);
 std::string get_error_response(int code);
+std::string make_autoindex_body(std::string root);
 
 
 int match_against_config_domains(running_server* server, UserRequestInfo req) {
@@ -69,14 +70,18 @@ int    match_against_config_path(server &server, UserRequestInfo req) {
 
 int is_method_allowed(UserRequestInfo &user_request, method_path_option &cur_path) {
     for (int method = GET; method <= HEADER; method++) {
+        std::cout << cur_path.method_type_allowed[static_cast<method_type>(method)] << std::endl;
+    }
+    for (int method = GET; method <= HEADER; method++) {
         if (user_request.methods_asked[static_cast<method_type>(method)] == true) {
-            if (cur_path.method_type_allowed[static_cast<method_type>(method)] == false) {
-                // error (method) not allowed
-                return (1);
+            if (cur_path.method_type_allowed[static_cast<method_type>(method)]) {
+                // method allowed
+                std::cout << (method) << std::endl;
+                return (0);
             }
             else {
-                // method allowed
-                return (0);
+                // error (method) not allowed
+                return (1);
             }
         }
     }
@@ -237,7 +242,11 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
                     server.loc_method[config_path_index],
                     server.root,
                     server.index);
-        else
+        else if (server.autoindex) {
+            std::string temp = make_autoindex_body(server.root);
+            response = make_header_response(200, 0, temp.size());
+            response.append(temp);
+        } else 
             response = get_error_response(698);
     }
     std::cout << response << "|" << std::endl;
@@ -282,7 +291,7 @@ void handle_connection(int client_fd, running_server* server) {
         // close(client_fd);
         return;
     }
-    std::cout << "buffer size is = " << bytes_read << std::endl;
+    std::cout << "buffer is = (" << buffer << ")" << std::endl;
     user_request = extract_from_buffer(buffer);
     int config_server_index = match_against_config_domains(server, user_request);
     if (config_server_index == -1) {
