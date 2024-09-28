@@ -2,7 +2,8 @@
 
 std::vector<server > *make_all_server(std::ifstream &fileToRead);
 std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf);
-const char *config_loc = "config/default.conf";
+// const char *config_loc = "config/default.conf";
+const char *config_loc = "config/ourDefault.conf";
 
 
 RunningServers::RunningServers() {
@@ -12,7 +13,7 @@ RunningServers::RunningServers() {
         exit(1);
     }
     std::vector<server> *servers = make_all_server(inputFile);
-    // std::cout << "stest" << std::endl;
+    std::cout << "stest" << std::endl;
     std::vector<int> ports;
     std::map<int, running_server *> running;
     for (int x = 0; x < servers->size(); x++) {

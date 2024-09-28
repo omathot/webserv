@@ -8,64 +8,140 @@
 
 UserRequestInfo extract_from_buffer(char *buffer);
 std::string get_error_response(int code);
-std::string make_autoindex_body(std::string root);
+std::string make_autoindex_body(std::string root, std::string path, std::string cur_url);
 
 
 int match_against_config_domains(running_server* server, UserRequestInfo req) {
     // doesn't feel too right
     for (size_t i = 0; i < server->subdomain.size(); i++) {
-        std::cout << server->subdomain[i].name << std::endl; 
-        if (server->subdomain[i].name.size() > req.domain.size() - 1
-            && server->subdomain[i].name.size() < req.domain.size() + 3) {
-            if (server->subdomain[i].name.find(req.domain) != std::string::npos)
-                return (i);
-        }
+        std::cout << server->subdomain[i].name << "|" << (req.domain) << std::endl; 
+        // if (server->subdomain[i].name.size() > req.domain.size() - 1
+        //     && server->subdomain[i].name.size() < req.domain.size() + 3) {
+        if (server->subdomain[i].name.find(req.domain) != std::string::npos)
+            return (i);
+        // }
     }
     return (-1);
 }
 
+struct config_path_search {
+    int config_index;
+    std::string surplus;
+};
 
-
-int    match_against_config_path(server &server, UserRequestInfo req) {
+config_path_search    match_against_config_path(server &server, UserRequestInfo &req) {
     size_t cur_size_read = 0;
     size_t total_size_read = 0;
+    config_path_search to_return;
     if (req.subdomains.empty()) {
-        req.subdomains.push_back("/");
-        // return (-2);
+        for (size_t i = 0; i < server.loc_method.size(); i++) {
+            std::cout << server.loc_method[i].path << "|\n";
+            // I hate that it works but well
+            if (server.loc_method[i].path == "/ ") {
+                to_return.config_index = i;
+                return (to_return);
+            }
+        }
+        to_return.config_index = -1;
+        return (to_return);
     }
-    // for (auto &it : req.subdomains)
-    // {
-    //     std::cout << it << "/";
-    // }
-    std::cout << std::endl;
+    size_t j;
+    for (size_t i = 0; i < server.loc_method.size(); i++) {
+
+        cur_size_read = 0;
+        total_size_read = 0;
+        std::vector<std::string> split_loc_meth = my_strsplit(server.loc_method[i].path, '/');
+        for (j = 0; j < req.subdomains.size() && j < split_loc_meth.size(); j++) {
+            std::cout << req.subdomains[j] << "|" << split_loc_meth[j] << "|\n"; 
+            if (req.subdomains[j].compare(split_loc_meth[j]) != 0)
+                break ;
+        }
+        if (j == split_loc_meth.size()) {
+            if (j < req.subdomains.size()) {
+                for (size_t j_temp = j; j_temp < req.subdomains.size(); j_temp++) {
+                    to_return.surplus.append(req.subdomains[j_temp]);
+                    to_return.surplus.append("/");
+                }
+            }
+            to_return.config_index = i;
+            return (to_return);
+        }
+    }
+    for (j = 0; j < server.loc_method.size(); j++) {
+        std::cout << server.loc_method[j].path << "|\n";
+        // I hate that it works but well
+        if (server.loc_method[j].path == "/ ") {
+            break ;
+        }
+    }
+    if (j != server.loc_method.size()) {
+        for (size_t j_temp = 0; j_temp < req.subdomains.size(); j_temp++) {
+            to_return.surplus.append(req.subdomains[j_temp]);
+            to_return.surplus.append("/");
+        }
+        to_return.config_index = j;
+        return (to_return);
+    }
+    to_return.config_index = -1;
+    return (to_return);
+
+
+
+
+
+    // all after this is the old version
     for (size_t i = 0; i < server.loc_method.size(); i++)
     {
         cur_size_read = 0;
         total_size_read = 0;
-        for (size_t j = 0; j < req.subdomains.size(); j++) {
+        for (j = 0; j < req.subdomains.size(); j++) {
             cur_size_read = server.loc_method[i].path.find(req.subdomains[j]);
-            if (cur_size_read == std::string::npos && total_size_read + 1 != cur_size_read) {
-                total_size_read = 0;
+            if (cur_size_read == std::string::npos) {
                 break ; // super break
             }
-            // std::cout << total_size_read <<  " == total_size_read,  cur_size_read == " << cur_size_read << ", req.subdomains[j].size() == " << req.subdomains[j].size() << "\n"; 
             total_size_read = cur_size_read + req.subdomains[j].size();
         }
-        // std::cout << server.loc_method[i].path << " = path, subdomains =  " << req.subdomains[0] << "\n";  
-        // std::cout << total_size_read << " = total_size_read, req.subdomains.size() = " << server.loc_method[i].path.size() << "\n"; 
-        // if (total_size_read == 24) {
-        //     std::cout << std::endl << server.loc_method[i].path << std::endl;
-        //     for (size_t j = 0; j < req.subdomains.size(); j++) {
-        //         std::cout << req.subdomains[j];
-        //     }
-        //     std::cout << std::endl;
-        // }
-        // if (total_size_read == server.loc_method[i].path.size() - 1 && server.loc_method[i].path[server.loc_method[i].path.size() - 1] == '/')
-        //     total_size_read++;
-        if (total_size_read == server.loc_method[i].path.size())
-            return (i);
+        if (total_size_read == server.loc_method[i].path.size()) {
+            std::cout << j << " = j ; req.subdomains.size= " << req.subdomains.size() << std::endl;
+            std::cout << req.subdomains[0];
+            if (j < req.subdomains.size()) {
+                for (size_t j_temp = j; j_temp < req.subdomains.size(); j_temp++) {
+                    to_return.surplus.append(req.subdomains[j_temp]);
+                    to_return.surplus.append("/");
+                }
+            }
+            to_return.config_index = i;
+            return (to_return);
+        }
     }
-    return (-1);
+    // ! this so that he check the root after trying everything else (need to be better later)
+    req.subdomains.insert(req.subdomains.begin(), "/");
+    for (size_t i = 0; i < server.loc_method.size(); i++)
+    {
+        cur_size_read = 0;
+        total_size_read = 0;
+        for (j = 0; j < req.subdomains.size(); j++) {
+            cur_size_read = server.loc_method[i].path.find(req.subdomains[j]);
+            if (cur_size_read == std::string::npos) {
+                break ; // super break
+            }
+            total_size_read = cur_size_read + req.subdomains[j].size();
+        }
+        if (total_size_read == server.loc_method[i].path.size()) {
+            std::cout << j << " = j ; req.subdomains.size= " << req.subdomains.size() << std::endl;
+            std::cout << req.subdomains[0];
+            if (j < req.subdomains.size()) {
+                for (size_t j_temp = j; j_temp < req.subdomains.size(); j_temp++) {
+                    to_return.surplus.append(req.subdomains[j_temp]);
+                    to_return.surplus.append("/");
+                }
+            }
+            to_return.config_index = i;
+            return (to_return);
+        }
+    }
+    to_return.config_index = -1;
+    return (to_return);
 }
 
 int is_method_allowed(UserRequestInfo &user_request, method_path_option &cur_path) {
@@ -188,21 +264,29 @@ std::string check_server_root_files(server &server, UserRequestInfo &user_reques
     return ("NULL");
 }
 
+bool is_surplus_valid_file(std::string sur_plus, std::string root) {
+    return false;
+}
+
 void handle_get_request(int client_fd, server &server, UserRequestInfo &user_request) {
     std::string response;
     std::cout << "match_against_config_path\n";
-    int config_path_index = match_against_config_path(server, user_request);
+    config_path_search config_parsed = match_against_config_path(server, user_request);
+    int config_path_index = config_parsed.config_index;
+    std::cout << "\n\n" << config_parsed.surplus <<"\n\n";
     if (config_path_index == -1) {
         std::cout << "match_against_config_path failed 1\n";
-        std::string temp = check_server_root_files(server, user_request);
-        if (temp == "NULL")
-            response = get_error_response(903);
-        else {
-            std::cout << temp << std::endl;
-            response = handle_single_connection_no_subdomain(user_request,
-                    server.root, temp);
-        }
+        // std::string temp = check_server_root_files(server, user_request);
+        // if (temp == "NULL")
+        //     response = get_error_response(903);
+        // else {
+        //     std::cout << temp << std::endl;
+        //     response = handle_single_connection_no_subdomain(user_request,
+        //             server.root, temp);
+        // }
+        response = get_error_response(903);
     }
+    // never happens now I think;
     else if (config_path_index == -2) {
         if (server.root.empty()) {
             response = get_error_response(973);
@@ -242,14 +326,19 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
                     server.loc_method[config_path_index],
                     server.root,
                     server.index);
-        else if (server.autoindex) {
-            std::string temp = make_autoindex_body(server.root);
+        else if (is_surplus_valid_file(config_parsed.surplus, server.root)) {
+            response = get_error_response(708);
+        }
+        else if (server.loc_method[config_path_index].autoindex) {
+            std::cout << server.loc_method[config_path_index].autoindex << "  "<< server.name << std::endl;
+            std::string cur_url = std::to_string(server.port) + "/" + server.name + "/" + server.loc_method[config_path_index].path;
+            std::string temp = make_autoindex_body(server.root, config_parsed.surplus, cur_url);
             response = make_header_response(200, 0, temp.size());
             response.append(temp);
         } else 
             response = get_error_response(698);
     }
-    std::cout << response << "|" << std::endl;
+    // std::cout << response << "|" << std::endl;
     send(client_fd, response.data(), response.size(), 0);
     std::cout << "\n\n\n";
 }
@@ -293,6 +382,8 @@ void handle_connection(int client_fd, running_server* server) {
     }
     std::cout << "buffer is = (" << buffer << ")" << std::endl;
     user_request = extract_from_buffer(buffer);
+    // for (auto temp : user_request.subdomains)
+    //     std::cout << temp << std::endl;
     int config_server_index = match_against_config_domains(server, user_request);
     if (config_server_index == -1) {
         std::cout << "match_against_config_domains failed 3\n";

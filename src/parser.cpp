@@ -145,20 +145,20 @@ std::ostream& operator<<(std::ostream& o, const std::map<method_type, bool>& s) 
 // Overloading the << operator for server struct
 std::ostream& operator<<(std::ostream& o, const server& s) {
     o << "Server details:\n";
-    o << "Port: " << s.port << "\n";
-    o << "Name: " << s.name << "\n";
-    o << "Root: " << s.root << "\n";
-    o << "Uploads Dir: " << s.uploads_dir << "\n";
-    o << "Autoindex: " << (s.autoindex ? "true" : "false") << "\n";
+    o << "Port: " << s.port << "|\n";
+    o << "Name: " << s.name << "|\n";
+    o << "Root: " << s.root << "|\n";
+    o << "Uploads Dir: " << s.uploads_dir << "|\n";
+    o << "Autoindex: " << (s.autoindex ? "true" : "false") << "|\n";
     o << "Error Pages: | ";
     for (std::map<int, std::string>::const_iterator it = s.error_pages.begin(); it != s.error_pages.end(); it++)
     {
         o << it->first << ": " << it->second << " | ";
     }
     o << std::endl;
-    o << "Index: " << s.index << "\n";
-    o << "Access Log: " << s.access_log << "\n";
-    o << "Error Log: " << s.error_log << "\n";
+    o << "Index: " << s.index << "|\n";
+    o << "Access Log: " << s.access_log << "|\n";
+    o << "Error Log: " << s.error_log << "|\n";
     for (size_t i = 0; i < s.loc_method.size(); i++)
     {
         o << "Location Method:  path: " << s.loc_method[i].path << " alias: " << s.loc_method[i].alias << std::endl
@@ -283,9 +283,11 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             std::cin >> temp;
         }
         methot_temp.path = method[i]->loc_name;
+        trim_spaces_semi(methot_temp.path);
         if (methot_temp.path[methot_temp.path.size() - 1] == '{')
             methot_temp.path.erase(methot_temp.path.size() - 1, 1);
         trim_spaces_semi(methot_temp.path);
+        std::cout << methot_temp.path << "|\n";
         // std::cout << methot_temp.path << "|\n";
         if (!method[i]->basic["alias"].empty()) {
             methot_temp.alias = method[i]->basic["alias"];
@@ -352,10 +354,14 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
     for (i = 0; i < parser->servers.size(); i++) {
         temp.port = std::stoi((parser->servers[i]->basic)["listen"]);
         temp.name = (parser->servers[i]->basic)["server_name"];
+        if (!temp.name.empty()) {
+            trim_spaces_semi(temp.name);
+            std::cout << temp.name << "|\n";
+        }
         temp.root = (parser->servers[i]->basic)["root"];
         trim_spaces_semi(temp.root);
         if (!(parser->servers[i]->basic)["redirect"].empty()) {
-            std::cout << (parser->servers[i]->basic)["redirect"] << "|\n";
+            // std::cout << (parser->servers[i]->basic)["redirect"] << "|\n";
             trim_spaces_semi((parser->servers[i]->basic)["redirect"]);
             temp.redirect = build_config_component((parser->servers[i]->basic)["redirect"]);
             // std::cout << temp.redirect << "|\n";
@@ -363,7 +369,7 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         else 
             temp.redirect.empty = true;
         temp.uploads_dir = (parser->servers[i]->basic)["uploads_dir"];
-        temp.autoindex = parser->servers[i]->basic["autoindex"].find("on");
+        temp.autoindex = parser->servers[i]->basic["autoindex"].find("on") != std::string::npos;
         temp.error_pages = treat_error_pages(parser->servers[i]->basic["error_page"]);
         // std::cout << "did one errorpage\n";
         // std::cin >> useless;
@@ -376,6 +382,7 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.loc_method = treat_loc_method(parser->servers[i]->servers, temp.autoindex);
         all_server->push_back(temp);
     }
+    std::cout << all_server;
     return all_server;
 }
 
@@ -445,6 +452,9 @@ UserRequestInfo extract_from_buffer(char *buffer) {
     to_return.subdomains.erase(to_return.subdomains.begin());
     // if (usefull_info[usefull_info.size() - 2])
     to_return.body = split_buffer.back(); 
+    // for (auto temp : to_return.subdomains) {
+    //     std::cout << temp << std::endl;
+    // }
     // std::cout << split_buffer[split_buffer.size() - 1] << "|||||||||" << std::endl;
 	return (to_return);
 }
