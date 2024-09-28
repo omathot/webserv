@@ -56,13 +56,13 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
             
             temp.append("<th>\n");
             if (i == 0) {
-                if (entry.is_directory()) {
+                // if (entry.is_directory()) {
                     temp.append(make_hyper_link(true_url + virtual_root, entry.path().filename().string(), entry.path().filename().string() + "/"));
                     // temp.append(entry.path().filename().string());
                     // temp.append("/");
-                } else {
-                    temp.append(entry.path().filename().string());
-                }
+                // } else {
+                //     temp.append(entry.path().filename().string());
+                // }
             } else if (i == 1) {
                 temp.append(entry.path().filename().string());
             } else if (!entry.is_directory()) {

@@ -1,4 +1,4 @@
-SRCS			= auto_index.cpp error_responce.cpp running_servers.cpp main.cpp parser.cpp Socket.cpp handle_connection.cpp
+SRCS			= auto_index.cpp error_responce.cpp running_servers.cpp main.cpp parser.cpp Socket.cpp handle_connection.cpp Request.cpp
 
 SRCSPATH		= src/
 BINPATH			= bin/
