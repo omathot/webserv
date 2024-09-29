@@ -34,29 +34,22 @@
         <input type="submit" value="Send GET Request">
     </form>
 
-    <form action="http://localhost:8070/main.com/files/photos" method="post">
+ <form action="http://localhost:8070/main.com/files/photos" method="post">
         <h2>POST Request</h2>
-        <label for="post-title">Title:</label>
-        <input type="text" id="post-title" name="title" value="foo">
-        <br>
-        <label for="post-body">Body:</label>
-        <input type="text" id="post-body" name="body" value="bar">
-        <br>
-        <label for="post-userid">User ID:</label>
-        <input type="number" id="post-userid" name="userId" value="1">
+        <label for="post-file">File:</label>
+        <input type="file" id="post-file" name="file">
         <br>
         <input type="submit" value="Send POST Request">
     </form>
-
+    
     <form action="http://localhost:8070/main.com/files/photos" method="post">
         <h2>DELETE Request (Simulated)</h2>
         <p>Note: HTML forms cannot directly make DELETE requests. This form simulates a DELETE request using POST.</p>
         <input type="hidden" name="_method" value="DELETE">
-        <label for="delete-id">ID to Delete:</label>
-        <input type="number" id="delete-id" name="id" value="1">
+        <label for="delete-filename">Filename to Delete:</label>
+        <input type="text" id="delete-filename" name="file_name">
         <br>
         <input type="submit" value="Send DELETE Request">
     </form>
-
 </body>
 </html>
