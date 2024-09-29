@@ -161,7 +161,8 @@ std::ostream& operator<<(std::ostream& o, const server& s) {
     o << "Error Log: " << s.error_log << "|\n";
     for (size_t i = 0; i < s.loc_method.size(); i++)
     {
-        o << "Location Method:  path: " << s.loc_method[i].path << " alias: " << s.loc_method[i].alias << std::endl
+        o << "Location Method:  path: " << s.loc_method[i].path << " cgi_path: " << s.loc_method[i].cgi_path << std::endl
+         << "Location Method:  path: " << s.loc_method[i].path << " cgi_execute: " << s.loc_method[i].cgi_execute << std::endl
             << "            auto index: " << s.loc_method[i].autoindex << " method: " << s.loc_method[i].method_type_allowed;
     }
     
@@ -289,11 +290,13 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
         trim_spaces_semi(methot_temp.path);
         std::cout << methot_temp.path << "|\n";
         // std::cout << methot_temp.path << "|\n";
-        if (!method[i]->basic["alias"].empty()) {
-            methot_temp.alias = method[i]->basic["alias"];
+        if (!method[i]->basic["cgi_path"].empty()) {
+            methot_temp.cgi_path = method[i]->basic["cgi_path"];
+            trim_spaces_semi(methot_temp.cgi_path);
         }
-        else {
-            methot_temp.alias.clear();
+        if (!method[i]->basic["cgi_execute"].empty()) {
+            methot_temp.cgi_execute = method[i]->basic["cgi_execute"];
+            trim_spaces_semi(methot_temp.cgi_execute);
         }
         if (!method[i]->basic["autoindex"].empty()) {
             methot_temp.autoindex = method[i]->basic["autoindex"].find("on") != std::string::npos;

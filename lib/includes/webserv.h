@@ -72,8 +72,6 @@ void error_response(int client_fd);
 
 const int BUFFER_SIZE = 1024;
 
-
-
 # define DEFAULT_CONFIG ".src/config/default.conf"
 
 #endif

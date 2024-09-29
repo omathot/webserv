@@ -371,53 +371,100 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
     std::cout << "\n\n\n";
 }
 
-void handle_post_request(int client_fd, server &server, UserRequestInfo &user_request) {
-    // size_t delemite_content_type = user_request.body.find("Content-Type");
-    // size_t delemite_filename = user_request.body.find("filename");
-    // std::cout << user_request.body << std::endl << std::endl;
-    std::string response;
-    // std::cout << delemite_filename << " = delemite_filename | delemite_content_type = " << delemite_content_type << " npos = " << std::string::npos << std::endl;
-    if (user_request.header_content["Content-Disposition"].empty()) {
-        std::string temp = "<h1>Post resquest Denied</h1>";
-        response = make_header_response(403, POST, "post.html", temp.size());
-        response.append(temp);
-    } else {
-        size_t delemite_filename = user_request.header_content["Content-Disposition"].find("filename");
-        size_t file_name_del = user_request.header_content["Content-Disposition"].find("\"", delemite_filename) + 1;
-        size_t file_name_del_end = user_request.header_content["Content-Disposition"].find("\"", file_name_del);
-        std::string filename = user_request.header_content["Content-Disposition"].substr(file_name_del, file_name_del_end);
+// void handle_post_request(int client_fd, server &server, UserRequestInfo &user_request) {
+//     // size_t delemite_content_type = user_request.body.find("Content-Type");
+//     // size_t delemite_filename = user_request.body.find("filename");
+//     // std::cout << user_request.body << std::endl << std::endl;
+//     std::string response;
+//     // std::cout << delemite_filename << " = delemite_filename | delemite_content_type = " << delemite_content_type << " npos = " << std::string::npos << std::endl;
+//     if (user_request.header_content["Content-Disposition"].empty()) {
+//         std::string temp = "<h1>Post resquest Denied</h1>";
+//         response = make_header_response(403, POST, "post.html", temp.size());
+//         response.append(temp);
+//     } else {
+//         size_t delemite_filename = user_request.header_content["Content-Disposition"].find("filename");
+//         size_t file_name_del = user_request.header_content["Content-Disposition"].find("\"", delemite_filename) + 1;
+//         size_t file_name_del_end = user_request.header_content["Content-Disposition"].find("\"", file_name_del);
+//         std::string filename = user_request.header_content["Content-Disposition"].substr(file_name_del, file_name_del_end);
         
-        // size_t start_of_file_content = user_request.body.find("\n", delemite_content_type) + 1;
-        std::string file_content = user_request.body;
-        std::cout << server.root + "download/" + filename;
-        std::fstream download(server.root + "download/" + filename);
-        download << file_content;
-        std::string body = "<h1>Post resquest fuffiled</h1>";
-        // response = make_header_response(201, POST, "post.html", body.size());
-        // response.append(body);
-        // std::cout << response << std::endl;
-        response = R"(HTTP/1.1 201 Created
-Content-Type: application/json
-Content-Length: 128
-Location: https://api.example.com/files/newfile.txt
-Date: Sun, 29 Sep 2024 12:00:00 GMT
+//         // size_t start_of_file_content = user_request.body.find("\n", delemite_content_type) + 1;
+//         std::string file_content = user_request.body;
+//         std::cout << server.root + "download/" + filename;
+//         std::fstream download(server.root + "download/" + filename);
+//         download << file_content;
+//         std::string body = "<h1>Post resquest fuffiled</h1>";
+//         // response = make_header_response(201, POST, "post.html", body.size());
+//         // response.append(body);
+//         // std::cout << response << std::endl;
+//         response = R"(HTTP/1.1 201 Created
+// Content-Type: application/json
+// Content-Length: 128
+// Location: https://api.example.com/files/newfile.txt
+// Date: Sun, 29 Sep 2024 12:00:00 GMT
 
-{
-  "id": "file123",
-  "filename": "newfile.txt",
-  "size": 1024,
-  "created_at": "2024-09-29T12:00:00Z",
-  "message": "File created successfully"
-})";
+// {
+//   "id": "file123",
+//   "filename": "newfile.txt",
+//   "size": 1024,
+//   "created_at": "2024-09-29T12:00:00Z",
+//   "message": "File created successfully"
+// })";
+//     }
+//     send(client_fd, response.data(), response.size(), 0);
+// }
+
+size_t find_cgi_path(server &server) {
+    for (size_t i = 0; i < server.loc_method.size(); i++)
+    {
+        if (!server.loc_method[i].cgi_execute.empty() && !server.loc_method[i].cgi_path.empty())
+            return i;
     }
-    send(client_fd, response.data(), response.size(), 0);
+    return -1;
 }
 
+void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_request) {
+    size_t index_config_cgi = find_cgi_path(server);
+    std::string response;
+    if (index_config_cgi == -1) {
+        // no python gin in here
+        response = get_error_response(459);
+    } else {
+        int pid = fork(); 
+        if (pid == -1) {
+            response = get_error_response(459);
+        } else {
+            if (pid == 0) {
+                size_t start_script_name = user_request.subdomains[index_config_cgi].rfind('/');
+                std::string path_to_script = server.root + server.loc_method[index_config_cgi].path
+                    + user_request.subdomains[index_config_cgi].substr(start_script_name + 1);
+                char * const argv[] = {const_cast<char*>(path_to_script.c_str()), NULL};
+                execve(server.loc_method[index_config_cgi].cgi_path.c_str(), argv, NULL);
+            }
+            // waitpid(pid);
+        }
+    }
+}
 void handle_del_request(int client_fd, server &server, UserRequestInfo &user_request) {
     std::string temp = "<h1>Delete resquest Denied</h1>";
     std::string response = make_header_response(403, DELETE, "del.html", temp.size());
     response.append(temp);
     send(client_fd, response.data(), response.size(), 0);
+}
+
+
+bool end_with_py(std::string str) {
+    if (str.back() == '/')
+        str.pop_back();
+    if (str.back() == 'y') {
+        str.pop_back();
+        if (str.back() == 'p') {
+            str.pop_back();
+            if (str.back() == '.')
+                str.pop_back();
+                return true;
+        }
+    }
+    return false;
 }
 
 void handle_connection(int client_fd, running_server* server) {
@@ -454,15 +501,14 @@ void handle_connection(int client_fd, running_server* server) {
         send(client_fd, response.data(), response.size(), 0);
         return ;
     }
-    if (user_request.methods_asked[GET]) {
+    if (end_with_py(user_request.subdomains[config_server_index])) {
+        handle_cgi_request(client_fd, server->subdomain[config_server_index], user_request);
+    }
+    else if (user_request.methods_asked[GET]) {
         handle_get_request(client_fd, server->subdomain[config_server_index], user_request);
     }
-    else if (user_request.methods_asked[POST]) {
-        if (user_request.body.find("DELETE") != std::string::npos) {
+    else if (user_request.methods_asked[POST] && user_request.body.find("DELETE") != std::string::npos) {
             handle_del_request(client_fd, server->subdomain[config_server_index], user_request);
-        }
-        else
-            handle_post_request(client_fd, server->subdomain[config_server_index], user_request);
     } else {
         std::cout << "Unknown method sent\n";
         std::string response = get_error_response(353);
