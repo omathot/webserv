@@ -1,5 +1,7 @@
 #include "../lib/includes/webserv.h"
 #include <filesystem>
+#include <iomanip>
+#include <chrono>
 
 std::vector<std::string> get_all_server_files(std::string root);
 std::string get_error_response(int code);
@@ -56,15 +58,20 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
             
             temp.append("<th>\n");
             if (i == 0) {
-                // if (entry.is_directory()) {
+                if (entry.is_directory()) {
                     temp.append(make_hyper_link(true_url + virtual_root, entry.path().filename().string(), entry.path().filename().string() + "/"));
                     // temp.append(entry.path().filename().string());
                     // temp.append("/");
-                // } else {
+                } else {
+                    temp.append(make_hyper_link(true_url + virtual_root, entry.path().filename().string(), entry.path().filename().string()));
                 //     temp.append(entry.path().filename().string());
-                // }
+                }
             } else if (i == 1) {
+                // std::ostringstream oss;
                 temp.append(entry.path().filename().string());
+                // oss << std::put_time((entry.last_write_time().), "%d-%m-%Y %H-%M-%S");
+                // temp.append(oss.str());
+                // temp.append(std::format("{}", ));
             } else if (!entry.is_directory()) {
                 temp.append(std::to_string(std::filesystem::file_size(entry.path())));
             }

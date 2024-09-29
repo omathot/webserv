@@ -416,7 +416,7 @@ UserRequestInfo extract_from_buffer(char *buffer) {
 		it->second = false;
 	}
 	// std::cout << "|buffer=|" << buffer <<  "|============|\n";
-	std::vector<std::string> split_buffer =  splitString(buffer, "\r\n");
+	std::vector<std::string> split_buffer = splitString(buffer, "\r\n");
     // std::string split_buffer;
     // std::string delemiter = "\r\n";
     // std::getline(iss, split_buffer, delemiter);
@@ -451,7 +451,17 @@ UserRequestInfo extract_from_buffer(char *buffer) {
     // }
     to_return.subdomains.erase(to_return.subdomains.begin());
     // if (usefull_info[usefull_info.size() - 2])
-    to_return.body = split_buffer.back(); 
+    to_return.body = split_buffer.back();
+    split_buffer.pop_back();
+    for (size_t i = 1; i < split_buffer.size(); i++) {
+        size_t collon_index = split_buffer[i].find(":");
+        if (collon_index != std::string::npos) {
+            std::string map_name = split_buffer[i].substr(0, collon_index); 
+            // std::cout << map_name << "|" << std::endl;
+            to_return.header_content[map_name] = split_buffer[i].substr(collon_index + 1);
+        }
+    }
+    
     // for (auto temp : to_return.subdomains) {
     //     std::cout << temp << std::endl;
     // }

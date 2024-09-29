@@ -34,7 +34,7 @@
         <input type="submit" value="Send GET Request">
     </form>
 
- <form action="http://localhost:8070/main.com/files/photos" method="post">
+    <form action="http://localhost:8070/main.com/files/photos" method="post" enctype="multipart/form-data">
         <h2>POST Request</h2>
         <label for="post-file">File:</label>
         <input type="file" id="post-file" name="file">
@@ -51,5 +51,7 @@
         <br>
         <input type="submit" value="Send DELETE Request">
     </form>
+    
+
 </body>
 </html>
