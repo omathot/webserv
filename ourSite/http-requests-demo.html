@@ -26,13 +26,14 @@
 <body>
     <h1>HTML HTTP Requests Demo</h1>
 
-    <form action="http://localhost:8070/main.com/files/photos/main/hello/" method="get">
+    <!-- <form action="http://localhost:8070/main.com/helloworld.py" method="get">
         <h2>GET Request</h2>
-        <label for="get-param">Parameter:</label>
-        <input type="text" id="get-param" name="param" value="test">
-        <br>
         <input type="submit" value="Send GET Request">
-    </form>
+    </form> -->
+    <form name="search" action="http://localhost:8070/main.com/cgi-bin/helloworld.py" method="get">
+        <!-- Search: <input type="text" name="searchbox"> -->
+        <input type="submit" value="Submit">
+        </form> 
 
     <form action="http://localhost:8070/main.com/files/photos" method="post" enctype="multipart/form-data">
         <h2>POST Request</h2>

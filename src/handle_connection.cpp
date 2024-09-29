@@ -429,15 +429,19 @@ void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_req
         // no python gin in here
         response = get_error_response(459);
     } else {
+        std::cout << "started forking" << std::endl;
         int pid = fork(); 
         if (pid == -1) {
             response = get_error_response(459);
         } else {
             if (pid == 0) {
-                size_t start_script_name = user_request.subdomains[index_config_cgi].rfind('/');
-                std::string path_to_script = server.root + server.loc_method[index_config_cgi].path
-                    + user_request.subdomains[index_config_cgi].substr(start_script_name + 1);
-                char * const argv[] = {const_cast<char*>(path_to_script.c_str()), NULL};
+                std::cout << user_request.subdomains.back() << std::endl;
+                size_t end_script_name = user_request.subdomains.back().rfind('?');
+                std::string path_to_script = server.root + server.loc_method[index_config_cgi].path.substr(1)
+                    + "/" + user_request.subdomains.back().substr(0 , end_script_name);
+                std::cout << path_to_script << "|\n";
+                char * const argv[] = {const_cast<char*>(server.loc_method[index_config_cgi].cgi_path.c_str()), const_cast<char*>(path_to_script.c_str()), NULL};
+                std::cout << server.loc_method[index_config_cgi].cgi_path << "|\n";
                 execve(server.loc_method[index_config_cgi].cgi_path.c_str(), argv, NULL);
             }
             // waitpid(pid);
@@ -452,7 +456,11 @@ void handle_del_request(int client_fd, server &server, UserRequestInfo &user_req
 }
 
 
-bool end_with_py(std::string str) {
+bool end_with_py(std::string input) {
+    size_t find_arg = input.find("?");
+    if (find_arg == std::string::npos)
+        return false;
+    std::string str = input.substr(0, find_arg);
     if (str.back() == '/')
         str.pop_back();
     if (str.back() == 'y') {
