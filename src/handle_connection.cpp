@@ -5,10 +5,6 @@
 // # include "Parser.h"
 #include "running_servers.h"
 #include <filesystem>
-
-
-
-
 #include <sstream>
 #include <string>
 // #include "Server.h"
@@ -362,7 +358,7 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
                 response = get_error_response(708);
         }
         else if (server.loc_method[config_path_index].autoindex) {
-            std::cout << server.loc_method[config_path_index].autoindex << "  "<< server.name << std::endl;
+            // std::cout << server.loc_method[config_path_index].autoindex << "  "<< server.name << std::endl;
             std::string cur_url = std::to_string(server.port) + "/" + server.name + "/" + server.loc_method[config_path_index].path;
             std::string temp = make_autoindex_body(server.root, config_parsed.surplus, cur_url);
             response = make_header_response(200, GET, "autoindex.html", temp.size());
@@ -376,9 +372,44 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
 }
 
 void handle_post_request(int client_fd, server &server, UserRequestInfo &user_request) {
-    std::string temp = "<h1>Post resquest Denied</h1>";
-    std::string response = make_header_response(403, POST, "post.html", temp.size());
-    response.append(temp);
+    // size_t delemite_content_type = user_request.body.find("Content-Type");
+    // size_t delemite_filename = user_request.body.find("filename");
+    // std::cout << user_request.body << std::endl << std::endl;
+    std::string response;
+    // std::cout << delemite_filename << " = delemite_filename | delemite_content_type = " << delemite_content_type << " npos = " << std::string::npos << std::endl;
+    if (user_request.header_content["Content-Disposition"].empty()) {
+        std::string temp = "<h1>Post resquest Denied</h1>";
+        response = make_header_response(403, POST, "post.html", temp.size());
+        response.append(temp);
+    } else {
+        size_t delemite_filename = user_request.header_content["Content-Disposition"].find("filename");
+        size_t file_name_del = user_request.header_content["Content-Disposition"].find("\"", delemite_filename) + 1;
+        size_t file_name_del_end = user_request.header_content["Content-Disposition"].find("\"", file_name_del);
+        std::string filename = user_request.header_content["Content-Disposition"].substr(file_name_del, file_name_del_end);
+        
+        // size_t start_of_file_content = user_request.body.find("\n", delemite_content_type) + 1;
+        std::string file_content = user_request.body;
+        std::cout << server.root + "download/" + filename;
+        std::fstream download(server.root + "download/" + filename);
+        download << file_content;
+        std::string body = "<h1>Post resquest fuffiled</h1>";
+        // response = make_header_response(201, POST, "post.html", body.size());
+        // response.append(body);
+        // std::cout << response << std::endl;
+        response = R"(HTTP/1.1 201 Created
+Content-Type: application/json
+Content-Length: 128
+Location: https://api.example.com/files/newfile.txt
+Date: Sun, 29 Sep 2024 12:00:00 GMT
+
+{
+  "id": "file123",
+  "filename": "newfile.txt",
+  "size": 1024,
+  "created_at": "2024-09-29T12:00:00Z",
+  "message": "File created successfully"
+})";
+    }
     send(client_fd, response.data(), response.size(), 0);
 }
 
@@ -458,21 +489,25 @@ std::string get_error_response(int code);
 std::string make_header_response(int code_num, method_type method_type, std::string surplus, size_t size) {
     std::cout << "---MAKING HEADER RESPONSE---" << std::endl;
     Request req = Request(code_num, surplus, method_type);
-    std::cout << "just made req" << std::endl;
+    // std::cout << "just made req" << std::endl;
     auto now = std::chrono::system_clock::now();
     auto now_c = std::chrono::system_clock::to_time_t(now);
     std::ostringstream oss; 
 
-    std::cout << "Making code" << std::endl;
-    std::string code = std::to_string(code_num) + " Ok\r\n";
+    std::string code;
+    // std::cout << "Making code" << std::endl;
+    // if (method_type == POST)
+    //     code = std::to_string(code_num) + " Created\r\n";
+    // else
+        code = std::to_string(code_num) + " Ok\r\n";
 
-    std::cout << "Making method" << std::endl;
+    // std::cout << "Making method" << std::endl;
     std::string method = req.getMethod() + "\r\n";;
     
-    std::cout << "Making date" << std::endl;
+    // std::cout << "Making date" << std::endl;
     std::string date = std::to_string(now_c) + "\r\n";
 
-    std::cout << "making content_type" << std::endl;
+    // std::cout << "making content_type" << std::endl;
     std::string content_type = req.getContentType() + "\r\n";
     std::string message = req.getMessage();
     oss << "HTTP/1.1 ";
@@ -486,7 +521,7 @@ std::string make_header_response(int code_num, method_type method_type, std::str
     oss << "\r\n";
 
     // req.setResponse(oss.str());
-    std::cout << "(" << oss.str() << ")";
+    // std::cout << "(" << oss.str() << ")";
     return (oss.str());
 
 }

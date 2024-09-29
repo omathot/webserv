@@ -65,6 +65,7 @@ struct UserRequestInfo {
 		std::vector<std::string> subdomains;
 		std::map<method_type, bool> methods_asked;
 		std::string body;
+		std::map<std::string, std::string> header_content; 
 };
 
 void error_response(int client_fd);
