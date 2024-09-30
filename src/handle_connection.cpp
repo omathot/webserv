@@ -206,7 +206,7 @@ std::string handle_single_connetion(UserRequestInfo &user_request, method_path_o
     std::string content_responce;
     std::string line;
     if (!index.is_open()) {
-        response = get_error_response(684);
+        response = get_error_response(404);
         return response;
     }
     while (std::getline(index, line)) {
@@ -226,7 +226,7 @@ std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request,
     std::string content_responce;
     std::string line;
     if (!index.is_open()) {
-        response = get_error_response(685);
+        response = get_error_response(404);
         return response;
     }
     while (std::getline(index, line)) {
@@ -305,12 +305,12 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
         //     response = handle_single_connection_no_subdomain(user_request,
         //             server.root, temp);
         // }
-        response = get_error_response(903);
+        response = get_error_response(404);
     }
     // never happens now I think;
     else if (config_path_index == -2) {
         if (server.root.empty()) {
-            response = get_error_response(973);
+            response = get_error_response(404);
         } 
         else if (!server.redirect.empty)
             response = handle_single_redirection(
@@ -341,7 +341,7 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
                     server.redirect.path);
         else if (is_method_allowed(user_request, server.loc_method[config_path_index]) != 0) {
             std::cout << "match_against_config_domains failed 2" << std::endl;
-            std::string response = get_error_response(366);
+            std::string response = get_error_response(401);
         } else if (!server.index.empty())
             response = handle_single_connetion(user_request, 
                     server.loc_method[config_path_index],
@@ -361,7 +361,7 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
                 response.append(body);
             }
             else 
-                response = get_error_response(708);
+                response = get_error_response(404);
         }
         else if (server.loc_method[config_path_index].autoindex) {
             // std::cout << server.loc_method[config_path_index].autoindex << "  "<< server.name << std::endl;
@@ -370,7 +370,7 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
             response = make_header_response(200, GET, "autoindex.html", temp.size());
             response.append(temp);
         } else 
-            response = get_error_response(698);
+            response = get_error_response(403);
     }
     // std::cout << response << "|" << std::endl;
     send(client_fd, response.data(), response.size(), 0);
@@ -433,12 +433,12 @@ void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_req
     std::string response;
     if (index_config_cgi == -1) {
         // no python gin in here
-        response = get_error_response(459);
+        response = get_error_response(404);
     } else {
         std::cout << "started forking" << std::endl;
         int pid = fork(); 
         if (pid == -1) {
-            response = get_error_response(459);
+            response = get_error_response(500);
         } else {
             if (pid == 0) {
                 std::cout << user_request.subdomains.back() << std::endl;
@@ -524,7 +524,7 @@ void handle_connection(int client_fd, running_server* server) {
     int config_server_index = match_against_config_domains(server, user_request);
     if (config_server_index == -1) {
         std::cout << "match_against_config_domains failed 3\n";
-        std::string response = get_error_response(943);
+        std::string response = get_error_response(404);
         send(client_fd, response.data(), response.size(), 0);
         return ;
     }
@@ -538,7 +538,7 @@ void handle_connection(int client_fd, running_server* server) {
             handle_del_request(client_fd, server->subdomain[config_server_index], user_request);
     } else {
         std::cout << "Unknown method sent\n";
-        std::string response = get_error_response(353);
+        std::string response = get_error_response(405);
         send(client_fd, response.data(), response.size(), 0);
         return ;
     }
@@ -564,41 +564,64 @@ std::string match_code(int code_n) {
     switch (code_n) {
         case 200:
             code = std::to_string(code_n) + " Ok\r\n";
+            break ;
         case 201:
             code = std::to_string(code_n) + " Created\r\n";
+            break ;
         case 202:
             code = std::to_string(code_n) + " Accepted\r\n";
+            break ;
         case 302:
             code = std::to_string(code_n) + " Found\r\n";
+            break ;
         case 400:
             code = std::to_string(code_n) + " Bad Request\r\n";
+            break ;
         case 401:
             code = std::to_string(code_n) + " Unauthorized\r\n";
+            break ;
         case 403:
             code = std::to_string(code_n) + " Forbidden\r\n";
+            break ;
         case 404:
             code = std::to_string(code_n) + " Not Found\r\n";
+            break ;
         case 405:
             code = std::to_string(code_n) + " Method Not Allowed\r\n";
+            break ;
         case 408:
             code = std::to_string(code_n) + " Request Timeout\r\n";
+            break ;
         case 411:
             code = std::to_string(code_n) + " Length Required\r\n";
+            break ;
         case 415:
             code = std::to_string(code_n) + " Unsupported Media Type\r\n";
+            break ;
         case 418:
             code = std::to_string(code_n) + " I'm a Teapot\r\n";
+            break ;
         case 429:
             code = std::to_string(code_n) + " Too Many Requests\r\n";
+            break ;
+        case 500:
+            code = std::to_string(code_n) + " Internal Server Error\r\n";
+            break ;
         default:
             code = std::to_string(code_n) + " Ok\r\n";
+            break ;
     }
     return code;
 }
 
-std::string buildDeleteHeader(int code_n, std::string surplus, size_t size) {
-    std::cout << "---MAKING DELETE HEADER---" << std::endl;
-    Request req = Request(code_n, surplus, method_type::DELETE);
+std::string make_header_response(int code_n, method_type method_type, std::string surplus, size_t size) {
+    Request req = Request(code_n, surplus, method_type);
+    if (method_type == POST)
+        std::cout << "---MAKING POST HEADER---" << std::endl;
+    else if (method_type == DELETE)
+        std::cout << "---MAKING DELETE HEADER---" << std::endl;
+    else
+        std::cout << "---MAKING GET HEADER---" << std::endl;
     char date_buff[20];
     auto now = std::chrono::system_clock::now();
     auto now_c = std::chrono::system_clock::to_time_t(now);
@@ -616,83 +639,12 @@ std::string buildDeleteHeader(int code_n, std::string surplus, size_t size) {
     oss << date << "\n"; // buffer does not have \n at the end, added here
     oss << "Content-type: ";
     oss << content_type;
-    oss << "Connection close" << "\r\n";
-    oss << "\r\n";
-
-    // req.setResponse(oss.str());
-    std::cout << "---HEADER PRINTOUT HERE---" << std::endl;
-    std::cout << "(" << oss.str() << ")";
-    std::cout << "--- ---" << std::endl;
-    return (oss.str());
-}
-
-std::string buildPostHeader(int code_n, std::string surplus, size_t size) {
-    std::cout << "---MAKING POST HEADER---" << std::endl;
-    Request req = Request(code_n, surplus, method_type::POST);
-    char date_buff[20];
-    auto now = std::chrono::system_clock::now();
-    auto now_c = std::chrono::system_clock::to_time_t(now);
-    std::ostringstream oss; 
-
-    std::string code = match_code(code_n);
-    std::string method = req.getMethod() + "\r\n";;
-    strftime(date_buff, 20, "%d-%m-%Y %H:%M:%S", localtime(&now_c));
-    std::string date = date_buff;
-    std::string content_type = req.getContentType() + "\r\n";
-    std::string message = req.getMessage();
-    oss << "HTTP/1.1 ";
-    oss << code;
-    oss << "Date : ";
-    oss << date << "\n"; // buffer does not have \n at the end, added here
-    oss << "Content-type: ";
-    oss << content_type;
-    oss << "Connection close" << "\r\n";
-    oss << "\r\n";
-
-    // req.setResponse(oss.str());
-    std::cout << "---HEADER PRINTOUT HERE---" << std::endl;
-    std::cout << "(" << oss.str() << ")";
-    std::cout << "--- ---" << std::endl;
-    return (oss.str());
-}
-
-std::string buildGetHeader(int code_n, std::string surplus, size_t size) {
-    std::cout << "---MAKING GET HEADER---" << std::endl;
-    Request req = Request(code_n, surplus, method_type::POST);
-    char date_buff[20];
-    auto now = std::chrono::system_clock::now();
-    auto now_c = std::chrono::system_clock::to_time_t(now);
-    std::ostringstream oss; 
-
-    std::string code = match_code(code_n);
-    std::string method = req.getMethod() + "\r\n";;
-    strftime(date_buff, 20, "%d-%m-%Y %H:%M:%S", localtime(&now_c));
-    std::string date = date_buff;
-    std::string content_type = req.getContentType() + "\r\n";
-    std::string message = req.getMessage();
-    oss << "HTTP/1.1 ";
-    oss << code;
-    oss << "Date : ";
-    oss << date << "\n"; // buffer does not have \n at the end, added here
-    oss << "Content-type: ";
-    oss << content_type;
+    oss << "Content-length: ";
+    oss << size << "\n";
     oss << "Connection close" << "\r\n";
     oss << "\r\n";
     std::cout << "---HEADER PRINTOUT HERE---" << std::endl;
     std::cout << "(" << oss.str() << ")";
     std::cout << "--- ---" << std::endl;
     return (oss.str());
-}
-
-
-std::string make_header_response(int code_num, method_type method_type, std::string surplus, size_t size) {
-    std::string header_response;
-    if (method_type == method_type::DELETE)
-        header_response = buildDeleteHeader(code_num, surplus, size);
-    else if (method_type == method_type::POST)
-        header_response = buildPostHeader(code_num, surplus, size);
-    else {
-        header_response = buildGetHeader(code_num, surplus, size);
-    }
-    return (header_response);
 }
