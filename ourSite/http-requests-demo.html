@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML HTTP Requests Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        input[type="submit"] {
+            margin-top: 10px;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>HTML HTTP Requests Demo</h1>
+
+    <!-- <form action="http://localhost:8070/main.com/helloworld.py" method="get">
+        <h2>GET Request</h2>
+        <input type="submit" value="Send GET Request">
+    </form> -->
+    <form name="search" action="http://localhost:8070/main.com/cgi-bin/helloworld.py" method="get">
+        <!-- Search: <input type="text" name="searchbox"> -->
+        <input type="submit" value="Submit">
+        </form> 
+
+    <form action="http://localhost:8070/main.com/files/photos" method="post" enctype="multipart/form-data">
+        <h2>POST Request</h2>
+        <label for="post-file">File:</label>
+        <input type="file" id="post-file" name="file">
+        <br>
+        <input type="submit" value="Send POST Request">
+    </form>
+    
+    <form action="http://localhost:8070/main.com/files/photos" method="post">
+        <h2>DELETE Request (Simulated)</h2>
+        <p>Note: HTML forms cannot directly make DELETE requests. This form simulates a DELETE request using POST.</p>
+        <input type="hidden" name="_method" value="DELETE">
+        <label for="delete-filename">Filename to Delete:</label>
+        <input type="text" id="delete-filename" name="file_name">
+        <br>
+        <input type="submit" value="Send DELETE Request">
+    </form>
+    
+
+</body>
+</html>
