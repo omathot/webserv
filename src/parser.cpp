@@ -363,6 +363,8 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         }
         temp.root = (parser->servers[i]->basic)["root"];
         trim_spaces_semi(temp.root);
+        if (temp.root.back() != '/')
+            temp.root.append("/");
         if (!(parser->servers[i]->basic)["redirect"].empty()) {
             // std::cout << (parser->servers[i]->basic)["redirect"] << "|\n";
             trim_spaces_semi((parser->servers[i]->basic)["redirect"]);
