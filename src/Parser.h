@@ -17,7 +17,8 @@ struct method_path_option {
     public:
         ConfigComponent redirection;
         std::string path;
-        std::string alias;
+        std::string cgi_path;
+        std::string cgi_execute;
         bool autoindex;
         std::map<method_type, bool> method_type_allowed;
 };
