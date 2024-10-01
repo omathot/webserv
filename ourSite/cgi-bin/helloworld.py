@@ -1,39 +1,31 @@
-
+#!/usr/bin/env python3
 import cgi
-import sys
-import os
-import cgitb; cgitb.enable()
+import cgitb
 
-
-# args = cgi.parse()
-print("<html>")
-print("<head>")
-print("<title>Hello - Second CGI Program</title>")
-print("<html>")
-print("<head>")
-print("<h2>Hello WORLD</h2>")
-print("<h3>")
-# Enable error display (useful for debugging)
+# Enable CGI traceback
 cgitb.enable()
 
-arguments = cgi.FieldStorage()
-for i in arguments.keys():
-	print(arguments[i].value)
+# Print necessary HTTP headers
 
-# Parse query string arguments
-# form = cgi.FieldStorage()
-# for i in form.keys():
-#  print form[i].value
-# Get the values of arg1 and arg2
-# arg1 = form.getvalue('arg1')
-# arg2 = form.getvalue('arg2')
+# HTML content
+print("""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello - CGI Program</title>
+</head>
+<body>
+    <h2>Hello WORLD</h2>
+    <h3>Form Data:</h3>
+""")
 
-# Prepare and send the HTTP response
-# print("Content-Type: text/html\n")
-# print(f"<html><body>")
-# print(f"<h2>Argument 1: {arg1}</h2>")
-# print(f"<h2>Argument 2: {arg2}</h2>")
-# print(f"</body></html>")
-print("</h3>")
-print("</body>")
-print("</html>")
+# Process form data
+form = cgi.FieldStorage()
+for field in form.keys():
+    print(f"    <p>{field}: {form[field].value}</p>")
+
+print("""
+</body>
+</html>
+""")

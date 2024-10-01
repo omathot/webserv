@@ -435,106 +435,201 @@ void free_argv(char ** argv) {
     delete [] argv;
 }
 
-char ** make_arg_cgi(std::string cgi_asked, std::string root, std::string our_cgi_path, std::string cgi_path) {
-    size_t end_script_name = cgi_asked.rfind('?');
-    char **argv;
-    std::string path_to_script = root + our_cgi_path.substr(1)
-        + "/" + cgi_asked.substr(0 , end_script_name);
-    if (end_script_name + 1 == cgi_asked.size()) {
-        argv = new char *[2];
-        argv[0] = new char [cgi_path.size() + 1];
-        argv[1] = new char [path_to_script.size() + 1];
-        std::strcpy(argv[0], cgi_path.c_str());
-        std::strcpy(argv[1], path_to_script.c_str());
-        // argv[0] = cgi_path.data();
-        // argv[1] = path_to_script.data();
-        argv[2] = nullptr;
-        // argv = {(),
-        //         (path_to_script.c_str()), NULL};
-    } else {
-        std::string args = cgi_asked.substr(end_script_name + 1);
-        // std::istringstream iss(args);        
-        std::vector<std::string> args_split = my_strsplit(args, '&');
-        argv = new char *[2 + args_split.size()];
-        argv[0] = new char [cgi_path.size() + 1];
-        argv[1] = new char [path_to_script.size() + 1];
-        std::strcpy(argv[0], cgi_path.c_str());
-        std::strcpy(argv[1], path_to_script.c_str());
-        size_t i;
-        for (i = 0; i < args_split.size(); i++) {
-            std::cout << args_split[i] << std::endl;
-            argv[2 + i] = new char [args_split[i].size() + 1];
-            std::strcpy(argv[2 + i], args_split[i].c_str());
-        }
-        argv[3 + i] = NULL;
+char** make_arg_cgi(const std::string& cgi_asked, const std::string& root, 
+                    const std::string& our_cgi_path, const std::string& cgi_path) {
+    size_t end_script_name = cgi_asked.find('?');
+    std::string path_to_script = root + our_cgi_path.substr(1) + "/" + 
+                                 (end_script_name != std::string::npos ? 
+                                  cgi_asked.substr(0, end_script_name) : cgi_asked);
+
+    std::vector<std::string> args;
+    if (end_script_name != std::string::npos && end_script_name + 1 < cgi_asked.size()) {
+        std::string query_string = cgi_asked.substr(end_script_name + 1);
+        args = my_strsplit(query_string, '&');
     }
+
+    // Allocate argv
+    char** argv = new char*[3 + args.size()];
+    
+    // Set interpreter path
+    argv[0] = new char[cgi_path.size() + 1];
+    std::strcpy(argv[0], cgi_path.c_str());
+
+    // Set script path
+    argv[1] = new char[path_to_script.size() + 1];
+    std::strcpy(argv[1], path_to_script.c_str());
+
+    // Null-terminate the array
+    argv[2] = nullptr;
+
     return argv;
 }
+
+std::map<std::string, std::string> make_env(server &server, char** exe_arg, UserRequestInfo &user_request) {
+    std::map<std::string, std::string> env;
+    env["SERVER_SOFTWARE"] = "webserver/1.1";
+    env["GATEWAY_INTERFACE"] = "CGI/1.1";
+    env["REDIRECT_STATUS"] = "1";
+    // env["SERVER_PROTOCOL"] = ;
+    env["SERVER_PORT"] = std::to_string(server.port);
+    env["REQUEST_METHOD"] = "webserver/1.1";
+    env["PATH_INFO"] = exe_arg[1];
+    env["PATH_TRANSLATED"] = exe_arg[1];
+    
+    size_t end_script_name = user_request.subdomains.back().find('?');
+    env["QUERY_STRING"] = user_request.subdomains.back().substr(end_script_name + 1);
+    // env[""] = ;
+    if (user_request.body.size() > 0)
+    env["CONTENT_LENGTH"] = std::to_string(user_request.body.size());
+    // if (user_request.header_content.find("content_type"))
+    //     env["CONTENT_TYPE"] = ;
+    return env;
+}
+
 
 void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_request) {
     size_t index_config_cgi = find_cgi_path(server);
     std::string response;
     std::string body;
+
     if (index_config_cgi == -1) {
-        // no python gin in here
         response = get_error_response(459);
-    } else {
-        std::cout << "started forking" << std::endl;
-        int pipefd[2];
-        if (pipe(pipefd) == -1) {
-            perror("pipe");
-            response = get_error_response(422);
-            send(client_fd, response.data(), response.size(), 0);
+        send(client_fd, response.data(), response.size(), 0);
+        return;
+    }
+
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        perror("pipe");
+        response = get_error_response(422);
+        send(client_fd, response.data(), response.size(), 0);
+        return;
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        response = get_error_response(459);
+        send(client_fd, response.data(), response.size(), 0);
+        return;
+    }
+
+    if (pid == 0) {  // Child process
+        close(pipefd[0]);
+        if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+            perror("dup2");
+            exit(1);
         }
-        int pid = fork(); 
-        if (pid == -1) {
-            response = get_error_response(459);
-        } else {
-            if (pid == 0) {
-                close(pipefd[0]);
-                if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
-                    perror("dup2");
-                    response = get_error_response(422);
-                    send(client_fd, response.data(), response.size(), 0);
-                }
-                char ** argv = make_arg_cgi(user_request.subdomains.back(), server.root,
-                    server.loc_method[index_config_cgi].path, server.loc_method[index_config_cgi].cgi_path);
-                
-                
-                // size_t end_script_name = user_request.subdomains.back().rfind('?');
-                // std::string path_to_script = server.root + server.loc_method[index_config_cgi].path.substr(1)
-                //     + "/" + user_request.subdomains.back().substr(0 , end_script_name);
-                // char * const argv[] = {const_cast<char*>(server.loc_method[index_config_cgi].cgi_path.c_str()),
-                //         const_cast<char*>(path_to_script.c_str()), NULL};
-                int i = 0;
-                while (argv[i] != nullptr)
-                {
-                    std::cout << argv[i] << std::endl;
-                    i++;
-                }
-                
-                execve(server.loc_method[index_config_cgi].cgi_path.c_str(), argv, NULL);
-                free_argv(argv);
-            } else {
-                close(pipefd[1]);
-                char buffer[1024];
-                ssize_t count;
-                std::string output;
-                while ((count = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
-                    buffer[count] = '\0';
-                    body += buffer;
-                }
-                close(pipefd[0]);
-                wait(nullptr);
-            }
+        close(pipefd[1]);
+
+        // Set up environment variables
+        setenv("QUERY_STRING", user_request.subdomains.back().substr(end_script_name + 1).c_str(), 1);
+        setenv("REQUEST_METHOD", "GET", 1);
+        setenv("CONTENT_TYPE", "text/html; charset=UTF-8", 1);
+        // setenv("CONTENT_LENGTH", std::to_string(user_request.content_length).c_str(), 1);
+
+        char ** argv = make_arg_cgi(user_request.subdomains.back(), server.root,
+                                    server.loc_method[index_config_cgi].path, 
+                                    server.loc_method[index_config_cgi].cgi_path);
+
+        // Debug: Print argv
+        for (int i = 0; argv[i] != nullptr; ++i) {
+            std::cerr << "argv[" << i << "]: " << argv[i] << std::endl;
+        }
+
+        execve(server.loc_method[index_config_cgi].cgi_path.c_str(), argv, NULL);
+        
+        // If execve returns, it's an error
+        perror("execve");
+        exit(1);
+    } else {  // Parent process
+        close(pipefd[1]);
+        char buffer[1024];
+        ssize_t count;
+
+        while ((count = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
+            buffer[count] = '\0';
+            body += buffer;
+        }
+
+        close(pipefd[0]);
+        int status;
+        waitpid(pid, &status, 0);
+
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
             response = make_header_response(200, GET, "python.html", body.size());
             response.append(body);
-            // waitpid(pid);
+        } else {
+            response = get_error_response(500);
         }
     }
-    send(client_fd, response.data(), response.size(), 0);
 
+    send(client_fd, response.data(), response.size(), 0);
 }
+
+// void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_request) {
+//     size_t index_config_cgi = find_cgi_path(server);
+//     std::string response;
+//     std::string body;
+//     if (index_config_cgi == -1) {
+//         // no python gin in here
+//         response = get_error_response(459);
+//     } else {
+//         std::cout << "started forking" << std::endl;
+//         int pipefd[2];
+//         if (pipe(pipefd) == -1) {
+//             perror("pipe");
+//             response = get_error_response(422);
+//             send(client_fd, response.data(), response.size(), 0);
+//         }
+//         int pid = fork(); 
+//         if (pid == -1) {
+//             response = get_error_response(459);
+//         } else {
+//             if (pid == 0) {
+//                 close(pipefd[0]);
+//                 if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+//                     perror("dup2");
+//                     response = get_error_response(422);
+//                     send(client_fd, response.data(), response.size(), 0);
+//                 }
+//                 char ** argv = make_arg_cgi(user_request.subdomains.back(), server.root,
+//                     server.loc_method[index_config_cgi].path, server.loc_method[index_config_cgi].cgi_path);
+                
+                
+//                 // size_t end_script_name = user_request.subdomains.back().rfind('?');
+//                 // std::string path_to_script = server.root + server.loc_method[index_config_cgi].path.substr(1)
+//                 //     + "/" + user_request.subdomains.back().substr(0 , end_script_name);
+//                 // char * const argv[] = {const_cast<char*>(server.loc_method[index_config_cgi].cgi_path.c_str()),
+//                 //         const_cast<char*>(path_to_script.c_str()), NULL};
+//                 int i = 0;
+//                 while (argv[i] != nullptr)
+//                 {
+//                     std::cout << argv[i] << std::endl;
+//                     i++;
+//                 }
+                
+//                 execve(server.loc_method[index_config_cgi].cgi_path.c_str(), argv, NULL);
+//                 free_argv(argv);
+//             } else {
+//                 close(pipefd[1]);
+//                 char buffer[1024];
+//                 ssize_t count;
+//                 std::string output;
+//                 while ((count = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
+//                     buffer[count] = '\0';
+//                     body += buffer;
+//                 }
+//                 close(pipefd[0]);
+//                 wait(nullptr);
+//             }
+//             response = make_header_response(200, GET, "python.html", body.size());
+//             response.append(body);
+//             // waitpid(pid);
+//         }
+//     }
+//     send(client_fd, response.data(), response.size(), 0);
+
+// }
 void handle_del_request(int client_fd, server &server, UserRequestInfo &user_request) {
     std::string temp = "<h1>Delete resquest Denied</h1>";
     std::string response = make_header_response(403, DELETE, "del.html", temp.size());
@@ -543,7 +638,8 @@ void handle_del_request(int client_fd, server &server, UserRequestInfo &user_req
 }
 
 
-bool end_with_py(std::string input) {
+bool end_with_py(std::string input, UserRequestInfo &user_request) {
+
     size_t find_arg = input.find("?");
     if (find_arg == std::string::npos)
         return false;
@@ -596,7 +692,7 @@ void handle_connection(int client_fd, running_server* server) {
         send(client_fd, response.data(), response.size(), 0);
         return ;
     }
-    if (end_with_py(user_request.subdomains[config_server_index])) {
+    if (end_with_py(user_request.subdomains[config_server_index], user_request)) {
         handle_cgi_request(client_fd, server->subdomain[config_server_index], user_request);
     }
     else if (user_request.methods_asked[GET]) {
@@ -666,3 +762,45 @@ std::string make_header_response(int code_num, method_type method_type, std::str
     return (oss.str());
 
 }
+
+
+
+
+
+
+// CGI ISSUES, MOVED TO BOTTOM
+// char ** make_arg_cgi(std::string cgi_asked, std::string root, std::string our_cgi_path, std::string cgi_path) {
+//     size_t end_script_name = cgi_asked.rfind('?');
+//     char **argv;
+//     std::string path_to_script = root + our_cgi_path.substr(1)
+//         + "/" + cgi_asked.substr(0 , end_script_name);
+//     if (end_script_name + 1 == cgi_asked.size()) {
+//         argv = new char *[2];
+//         argv[0] = new char [cgi_path.size() + 1];
+//         argv[1] = new char [path_to_script.size() + 1];
+//         std::strcpy(argv[0], cgi_path.c_str());
+//         std::strcpy(argv[1], path_to_script.c_str());
+//         // argv[0] = cgi_path.data();
+//         // argv[1] = path_to_script.data();
+//         argv[2] = nullptr;
+//         // argv = {(),
+//         //         (path_to_script.c_str()), NULL};
+//     } else {
+//         std::string args = cgi_asked.substr(end_script_name + 1);
+//         // std::istringstream iss(args);        
+//         std::vector<std::string> args_split = my_strsplit(args, '&');
+//         argv = new char *[2 + args_split.size()];
+//         argv[0] = new char [cgi_path.size() + 1];
+//         argv[1] = new char [path_to_script.size() + 1];
+//         std::strcpy(argv[0], cgi_path.c_str());
+//         std::strcpy(argv[1], path_to_script.c_str());
+//         size_t i;
+//         for (i = 0; i < args_split.size(); i++) {
+//             // std::cout << args_split[i] << std::endl;
+//             argv[2 + i] = new char [args_split[i].size() + 1];
+//             std::strcpy(argv[2 + i], args_split[i].c_str());
+//         }
+//         argv[3 + i] = NULL;
+//     }
+//     return argv;
+// }
