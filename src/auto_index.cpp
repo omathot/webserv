@@ -36,7 +36,7 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
     if (!exists_test(root + virtual_root))
     {
         std::cout << root + virtual_root << std::endl;
-        return (get_error_response(666));
+        return (get_error_response(500));
     }
     std::string true_url = "http://localhost:";
     true_url.append(cur_url);
