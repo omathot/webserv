@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 
-UserRequestInfo extract_from_buffer(char *buffer);
+UserRequestInfo extract_from_buffer(std::string buffer);
 std::string get_error_response(int code);
 std::string make_autoindex_body(std::string root, std::string path, std::string cur_url);
 std::string make_header_response(int code_num, method_type method_type, std::string surplus, size_t size);
@@ -33,7 +33,6 @@ void trim_spaces_semi(std::string &str);
 int match_against_config_domains(running_server* server, UserRequestInfo req) {
     // doesn't feel too right
     for (size_t i = 0; i < server->subdomain.size(); i++) {
-        std::cout << server->subdomain[i].name << "|" << (req.domain) << std::endl; 
         // if (server->subdomain[i].name.size() > req.domain.size() - 1
         //     && server->subdomain[i].name.size() < req.domain.size() + 3) {
         if (server->subdomain[i].name.find(req.domain) != std::string::npos)
@@ -52,10 +51,8 @@ config_path_search    match_against_config_path(server &server, UserRequestInfo 
     size_t cur_size_read = 0;
     size_t total_size_read = 0;
     config_path_search to_return;
-    std::cout << "test\n";
     if (req.subdomains.empty()) {
         for (size_t i = 0; i < server.loc_method.size(); i++) {
-            std::cout << server.loc_method[i].path << "|\n";
             // I hate that it works but well
             if (server.loc_method[i].path == "/ ") {
                 to_return.config_index = i;
@@ -65,7 +62,6 @@ config_path_search    match_against_config_path(server &server, UserRequestInfo 
         to_return.config_index = -1;
         return (to_return);
     }
-    std::cout << "test\n";
 
     size_t j;
     for (size_t i = 0; i < server.loc_method.size(); i++) {
@@ -74,7 +70,6 @@ config_path_search    match_against_config_path(server &server, UserRequestInfo 
         total_size_read = 0;
         std::vector<std::string> split_loc_meth = my_strsplit(server.loc_method[i].path, '/');
         for (j = 0; j < req.subdomains.size() && j < split_loc_meth.size(); j++) {
-            std::cout << req.subdomains[j] << "|" << split_loc_meth[j] << "|\n"; 
             if (req.subdomains[j].compare(split_loc_meth[j]) != 0)
                 break ;
         }
@@ -90,7 +85,6 @@ config_path_search    match_against_config_path(server &server, UserRequestInfo 
         }
     }
     for (j = 0; j < server.loc_method.size(); j++) {
-        std::cout << server.loc_method[j].path << "|\n";
         // I hate that it works but well
         if (server.loc_method[j].path == "/ ") {
             break ;
@@ -124,8 +118,6 @@ config_path_search    match_against_config_path(server &server, UserRequestInfo 
             total_size_read = cur_size_read + req.subdomains[j].size();
         }
         if (total_size_read == server.loc_method[i].path.size()) {
-            std::cout << j << " = j ; req.subdomains.size= " << req.subdomains.size() << std::endl;
-            std::cout << req.subdomains[0];
             if (j < req.subdomains.size()) {
                 for (size_t j_temp = j; j_temp < req.subdomains.size(); j_temp++) {
                     to_return.surplus.append(req.subdomains[j_temp]);
@@ -150,8 +142,6 @@ config_path_search    match_against_config_path(server &server, UserRequestInfo 
             total_size_read = cur_size_read + req.subdomains[j].size();
         }
         if (total_size_read == server.loc_method[i].path.size()) {
-            std::cout << j << " = j ; req.subdomains.size= " << req.subdomains.size() << std::endl;
-            std::cout << req.subdomains[0];
             if (j < req.subdomains.size()) {
                 for (size_t j_temp = j; j_temp < req.subdomains.size(); j_temp++) {
                     to_return.surplus.append(req.subdomains[j_temp]);
@@ -182,7 +172,6 @@ int is_method_allowed(UserRequestInfo &user_request, method_path_option &cur_pat
         if (user_request.methods_asked[static_cast<method_type>(method)] == true) {
             if (cur_path.method_type_allowed[static_cast<method_type>(method)]) {
                 // method allowed
-                std::cout << (method) << std::endl;
                 return (0);
             }
             else {
@@ -264,7 +253,6 @@ std::string handle_single_redirection(int ret_val, UserRequestInfo &user_request
     // 301 "Moved Permanently\r\nLocation: ";
     temp.append(redirection);
     // temp.append("\r\n");
-    std::cout << temp << "|\n";
     // response = make_header_response(301, 0, temp.size());
     // response.append(temp);
     return (temp);
@@ -298,7 +286,6 @@ bool is_surplus_valid_file(std::string sur_plus, std::string root) {
     if (sur_plus.empty())
         return false;
     sur_plus.pop_back();
-    std::cout << sur_plus << "|\n";
     if (identifyContentType(sur_plus) != "error")
         return true;
     return false;
@@ -306,10 +293,8 @@ bool is_surplus_valid_file(std::string sur_plus, std::string root) {
 
 void handle_get_request(int client_fd, server &server, UserRequestInfo &user_request) {
     std::string response;
-    std::cout << "match_against_config_path\n";
     config_path_search config_parsed = match_against_config_path(server, user_request);
     int config_path_index = config_parsed.config_index;
-    std::cout << "\n\n" << config_parsed.surplus <<"\n\n";
     if (config_path_index == -1) {
         std::cout << "match_against_config_path failed 1\n";
         // std::string temp = check_server_root_files(server, user_request);
@@ -458,14 +443,15 @@ char** make_arg_cgi(const std::string& cgi_asked, const std::string& root,
                                  (end_script_name != std::string::npos ? 
                                   cgi_asked.substr(0, end_script_name) : cgi_asked);
 
-    std::vector<std::string> args;
-    if (end_script_name != std::string::npos && end_script_name + 1 < cgi_asked.size()) {
-        std::string query_string = cgi_asked.substr(end_script_name + 1);
-        args = my_strsplit(query_string, '&');
-    }
+    // std::vector<std::string> args;
+    // if (end_script_name != std::string::npos && end_script_name + 1 < cgi_asked.size()) {
+    //     std::string query_string = cgi_asked.substr(end_script_name + 1);
+    //     args = my_strsplit(query_string, '&');
+    // }
+    // char** argv = new char*[3 + args.size()];
 
     // Allocate argv
-    char** argv = new char*[3 + args.size()];
+    char** argv = new char*[3];
     
     // Set interpreter path
     argv[0] = new char[cgi_path.size() + 1];
@@ -495,7 +481,7 @@ std::map<std::string, std::string> make_env(server &server, char** exe_arg, User
     env["SERVER_SOFTWARE"] = "webserver/1.1";
     env["GATEWAY_INTERFACE"] = "CGI/1.1";
     env["REDIRECT_STATUS"] = "1";
-    env["SERVER_PROTOCOL"] = "0";
+    env["SERVER_PROTOCOL"] = "HTTP/1.1";
     env["SERVER_PORT"] = std::to_string(server.port);
     env["REQUEST_METHOD"] = methodTypeToString(is_method_ask(user_request));
     env["PATH_INFO"] = exe_arg[1];
@@ -508,6 +494,7 @@ std::map<std::string, std::string> make_env(server &server, char** exe_arg, User
         env["CONTENT_LENGTH"] = std::to_string(user_request.body.size());
     if (!user_request.header_content["Content-Type"].empty()) {
         env["CONTENT_TYPE"] = user_request.header_content["Content-Type"];
+        perror(env["CONTENT_TYPE"].c_str());
         trim_spaces_semi(env["CONTENT_TYPE"]);
     }
     return env;
@@ -559,12 +546,12 @@ void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_req
     }
 
     if (pid == 0) {  // Child process
-        close(pipefd[0]);
-        if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+        if (dup2(pipefd[1], STDOUT_FILENO) == -1 || dup2(pipefd[0], STDIN_FILENO) == -1) {
             perror("dup2");
             exit(1);
         }
         close(pipefd[1]);
+        close(pipefd[0]);
 
         // Set up environment variables
         // setenv("QUERY_STRING", user_request.subdomains.back().substr(end_script_name + 1).c_str(), 1);
@@ -594,24 +581,28 @@ void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_req
         // free_argv(env);
         exit(1);
     } else {  // Parent process
+        write(pipefd[1], user_request.body.c_str(), user_request.body.size());
         close(pipefd[1]);
-        char buffer[1024];
-        ssize_t count;
-
-        while ((count = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
-            buffer[count] = '\0';
-            body += buffer;
-        }
-
-        close(pipefd[0]);
         int status;
         waitpid(pid, &status, 0);
-
         if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+            char buffer[1024];
+            ssize_t count;
+
+            while ((count = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
+                buffer[count] = '\0';
+                body += buffer;
+            }
+
+            close(pipefd[0]);
+            close(pipefd[1]);
             response = make_header_response(200, is_method_ask(user_request), "python.html", body.size());
             response.append(body);
         } else {
+            close(pipefd[0]);
+            close(pipefd[1]);
             response = get_error_response(500);
+
         }
     }
 
@@ -735,8 +726,24 @@ void handle_connection(int client_fd, running_server* server) {
     char buffer[BUFFER_SIZE] = "\0";
     // memset(buffer, 0, BUFFER_SIZE);
     // * check body size| compare  with buffer size (MAX BUFFER)
-    std::cout << client_fd << std::endl;
-    ssize_t bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
+    std::string full_buffer;
+    ssize_t bytes_read;
+    do {
+        bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
+        if (bytes_read < 0) {
+            throw std::runtime_error("recv error: " + std::string(strerror(errno)));
+        } else if (bytes_read > 0) {
+            full_buffer.append(buffer, bytes_read); // Append only the bytes read
+        }
+    } while (bytes_read == BUFFER_SIZE);
+
+    // ssize_t bytes_read = BUFFER_SIZE;
+    // while (bytes_read == BUFFER_SIZE)
+    // {
+    //     bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
+    //     full_buffer.append(buffer);
+    // }
+    std::cout << "user request is =\n|" << full_buffer << "|\n";
     buffer[bytes_read] = '\0';
 
     if (bytes_read < 0) {
@@ -749,10 +756,7 @@ void handle_connection(int client_fd, running_server* server) {
         // close(client_fd);
         return;
     }
-    std::cout << "buffer is = (" << buffer << ")" << std::endl;
-    user_request = extract_from_buffer(buffer);
-    // for (auto temp : user_request.subdomains)
-    //     std::cout << temp << std::endl;
+    user_request = extract_from_buffer(full_buffer);
     int config_server_index = match_against_config_domains(server, user_request);
     if (config_server_index == -1) {
         std::cout << "match_against_config_domains failed 3\n";

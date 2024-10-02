@@ -288,7 +288,6 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
         if (methot_temp.path[methot_temp.path.size() - 1] == '{')
             methot_temp.path.erase(methot_temp.path.size() - 1, 1);
         trim_spaces_semi(methot_temp.path);
-        std::cout << methot_temp.path << "|\n";
         // std::cout << methot_temp.path << "|\n";
         if (!method[i]->basic["cgi_path"].empty()) {
             methot_temp.cgi_path = method[i]->basic["cgi_path"];
@@ -315,7 +314,6 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             methot_temp.method_type_allowed[HEADER] = false;
         }
         if (!method[i]->basic["redirect"].empty()) {
-            std::cout << method[i]->basic["redirect"] << "|" << std::endl;
             // methot_temp.redirection = method[i]->basic["redirect"];
             trim_spaces_semi(method[i]->basic["redirect"]);
             
@@ -359,7 +357,6 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.name = (parser->servers[i]->basic)["server_name"];
         if (!temp.name.empty()) {
             trim_spaces_semi(temp.name);
-            std::cout << temp.name << "|\n";
         }
         temp.root = (parser->servers[i]->basic)["root"];
         trim_spaces_semi(temp.root);
@@ -387,7 +384,6 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.loc_method = treat_loc_method(parser->servers[i]->servers, temp.autoindex);
         all_server->push_back(temp);
     }
-    std::cout << all_server;
     return all_server;
 }
 
@@ -408,12 +404,11 @@ std::vector<std::string> splitString(const std::string& str, const std::string& 
     return tokens;
 }
 
-UserRequestInfo extract_from_buffer(char *buffer) {
+UserRequestInfo extract_from_buffer(std::string buffer) {
 
     // std::istringstream iss(buffer);
 	UserRequestInfo to_return;
     // std::string arg;
-
 
     // * check format of protocol
 	for (auto it = to_return.methods_asked.begin(); it != to_return.methods_asked.end(); it++)
@@ -429,48 +424,44 @@ UserRequestInfo extract_from_buffer(char *buffer) {
 	for (size_t i = 0; i < usefull_info.size(); i++)
 	{
 		if (usefull_info[i].find("GET") != std::string::npos) {
-            std::cout << "GET request\n";
             to_return.methods_asked[method_type::GET] = true;
         }
         if (usefull_info[i].find("POST") != std::string::npos) {
-            std::cout << "POST request\n";
             to_return.methods_asked[method_type::POST] = true;
         }
-        // if (usefull_info[i].find("DELETE") != std::string::npos) {
-        //     std::cout << "DELETE request\n";
-        //     to_return.methods_asked[method_type::DELETE] = true;
-        // }
-        // if (usefull_info[i].find("HEADER") != std::string::npos) {
-        //     std::cout << "HEADER request\n";
-        //     to_return.methods_asked[method_type::HEADER] = true;
-        // }
 	}
-    // std::cout << usefull_info[1] << std::endl; 
     to_return.subdomains = my_strsplit(usefull_info[1], '/');
 	to_return.domain = to_return.subdomains[0];
-    // std::string last_sub_domain_name = to_return.subdomains[to_return.subdomains.size() - 1];
-    // std::cout << last_sub_domain_name << "\n";
-    // if (last_sub_domain_name[last_sub_domain_name.size() - 1] == '/') {
-    //     std::cout << "did remove\n";
-    //     to_return.subdomains[to_return.subdomains.size() - 1].pop_back();
-    // }
+    size_t i;
+    for (i = 0; i < split_buffer.size(); i++)
+    {
+        if (split_buffer[i].empty()) {
+            i++;
+            break ;
+        }
+    }
+    size_t parts_in_body = split_buffer.size() - 1 - i; 
+    for (; i < split_buffer.size(); i++)
+    {
+        to_return.body.append(split_buffer[i]);
+        to_return.body.append("\r\n");
+    }
+    for (size_t i = 0; i < parts_in_body; i++)
+    {
+        split_buffer.pop_back();
+    }
     to_return.subdomains.erase(to_return.subdomains.begin());
-    // if (usefull_info[usefull_info.size() - 2])
-    to_return.body = split_buffer.back();
-    split_buffer.pop_back();
+    
     for (size_t i = 1; i < split_buffer.size(); i++) {
         size_t collon_index = split_buffer[i].find(":");
         if (collon_index != std::string::npos) {
             std::string map_name = split_buffer[i].substr(0, collon_index); 
-            // std::cout << map_name << "|" << std::endl;
-            to_return.header_content[map_name] = split_buffer[i].substr(collon_index + 1);
+            if (to_return.header_content[map_name].empty()) {
+                to_return.header_content[map_name] = split_buffer[i].substr(collon_index + 1);
+                trim_spaces_semi(to_return.header_content[map_name]);
+            }
         }
     }
-    
-    // for (auto temp : to_return.subdomains) {
-    //     std::cout << temp << std::endl;
-    // }
-    // std::cout << split_buffer[split_buffer.size() - 1] << "|||||||||" << std::endl;
 	return (to_return);
 }
 
