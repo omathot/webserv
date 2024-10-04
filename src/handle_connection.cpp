@@ -695,8 +695,12 @@ void handle_del_request(int client_fd, server &server, UserRequestInfo &user_req
 
 
 bool end_with_py(std::string input, UserRequestInfo &user_request) {
-
+    std::cout << "test2" << std::endl;
+    if (input.empty())
+        return false;
     size_t find_arg = input.find("?");
+    if (find_arg == std::string::npos)
+        return false;
     std::string str;
     if (find_arg != std::string::npos) {
         str = input.substr(0, find_arg);
@@ -757,6 +761,7 @@ void handle_connection(int client_fd, running_server* server) {
         return;
     }
     user_request = extract_from_buffer(full_buffer);
+
     int config_server_index = match_against_config_domains(server, user_request);
     if (config_server_index == -1) {
         std::cout << "match_against_config_domains failed 3\n";
@@ -764,14 +769,17 @@ void handle_connection(int client_fd, running_server* server) {
         send(client_fd, response.data(), response.size(), 0);
         return ;
     }
-    if (end_with_py(user_request.subdomains[config_server_index], user_request)) {
+    std::cout << "eaeogiuheuogtheougheoeuah" << config_server_index <<  std::endl;
+    std::cout << user_request.subdomains[config_server_index].empty() << std::endl;
+    std::cout << "eaeogiuheuogtheougheoeuah" << std::endl;
+    if (user_request.subdomains[config_server_index].empty() != 0 && end_with_py(user_request.subdomains[config_server_index], user_request)) {
         handle_cgi_request(client_fd, server->subdomain[config_server_index], user_request);
     }
     else if (user_request.methods_asked[GET]) {
         handle_get_request(client_fd, server->subdomain[config_server_index], user_request);
     }
     else if (user_request.methods_asked[POST] && user_request.body.find("DELETE") != std::string::npos) {
-            handle_del_request(client_fd, server->subdomain[config_server_index], user_request);
+        handle_del_request(client_fd, server->subdomain[config_server_index], user_request);
     } else {
         std::cout << "Unknown method sent\n";
         std::string response = get_error_response(405);
