@@ -22,7 +22,7 @@
 
 
 UserRequestInfo extract_from_buffer(std::string buffer);
-std::string get_error_response(int code);
+std::string get_error_response(int code, method_type method_type, server *server);
 std::string make_autoindex_body(std::string root, std::string path, std::string cur_url);
 std::string make_header_response(int code_num, method_type method_type, std::string surplus, size_t size);
 std::string identifyContentType(std::string s);
@@ -210,7 +210,8 @@ std::string handle_single_connetion(UserRequestInfo &user_request, method_path_o
     std::string content_responce;
     std::string line;
     if (!index.is_open()) {
-        response = get_error_response(404);
+        //maybe need to give him server later
+        response = get_error_response(404, GET, nullptr);
         return response;
     }
     while (std::getline(index, line)) {
@@ -230,7 +231,8 @@ std::string handle_single_connection_no_subdomain(UserRequestInfo &user_request,
     std::string content_responce;
     std::string line;
     if (!index.is_open()) {
-        response = get_error_response(404);
+        //maybe need to give him server later
+        response = get_error_response(404, GET, nullptr);
         return response;
     }
     while (std::getline(index, line)) {
@@ -305,12 +307,12 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
         //     response = handle_single_connection_no_subdomain(user_request,
         //             server.root, temp);
         // }
-        response = get_error_response(404);
+        response = get_error_response(404, GET, &server);
     }
     // never happens now I think;
     else if (config_path_index == -2) {
         if (server.root.empty()) {
-            response = get_error_response(404);
+            response = get_error_response(404, GET, &server);
         } 
         else if (!server.redirect.empty)
             response = handle_single_redirection(
@@ -341,7 +343,7 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
                     server.redirect.path);
         else if (is_method_allowed(user_request, server.loc_method[config_path_index]) != 0) {
             std::cout << "match_against_config_domains failed 2" << std::endl;
-            std::string response = get_error_response(401);
+            response = get_error_response(401, GET, &server);
         } else if (!server.index.empty())
             response = handle_single_connetion(user_request, 
                     server.loc_method[config_path_index],
@@ -361,7 +363,7 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
                 response.append(body);
             }
             else 
-                response = get_error_response(404);
+                response = get_error_response(404, GET, &server);
         }
         else if (server.loc_method[config_path_index].autoindex) {
             // std::cout << server.loc_method[config_path_index].autoindex << "  "<< server.name << std::endl;
@@ -370,7 +372,7 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
             response = make_header_response(200, GET, "autoindex.html", temp.size());
             response.append(temp);
         } else 
-            response = get_error_response(403);
+            response = get_error_response(403, GET, &server);
     }
     // std::cout << response << "|" << std::endl;
     send(client_fd, response.data(), response.size(), 0);
@@ -514,6 +516,17 @@ char **map_to_array(std::map<std::string, std::string> map_env) {
     return (array);
 }
 
+method_type get_method_type (UserRequestInfo &user_request) {
+    method_type cur_method;
+    if (user_request.methods_asked[POST])
+        cur_method = POST;
+    else if (user_request.methods_asked[DELETE])
+        cur_method = DELETE;
+    else
+        cur_method = GET;
+    return (cur_method);
+}
+
 
 void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_request) {
     size_t index_config_cgi = find_cgi_path(server);
@@ -524,8 +537,9 @@ void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_req
         user_request.methods_asked[DELETE] = true;
     }
 
+    method_type cur_method = get_method_type(user_request);
     if (index_config_cgi == -1) {
-        response = get_error_response(404);
+        response = get_error_response(404, cur_method, &server);
         send(client_fd, response.data(), response.size(), 0);
         return;
     }
@@ -533,14 +547,14 @@ void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_req
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe");
-        response = get_error_response(500);
+        response = get_error_response(500, cur_method, &server);
         send(client_fd, response.data(), response.size(), 0);
         return;
     }
 
     pid_t pid = fork();
     if (pid == -1) {
-        response = get_error_response(500);
+        response = get_error_response(500, cur_method, &server);
         send(client_fd, response.data(), response.size(), 0);
         return;
     }
@@ -601,8 +615,7 @@ void handle_cgi_request(int client_fd, server &server, UserRequestInfo &user_req
         } else {
             close(pipefd[0]);
             close(pipefd[1]);
-            response = get_error_response(500);
-
+            response = get_error_response(500, cur_method, &server);
         }
     }
 
@@ -694,13 +707,11 @@ void handle_del_request(int client_fd, server &server, UserRequestInfo &user_req
 }
 
 
-bool end_with_py(std::string input, UserRequestInfo &user_request) {
+bool end_with_py(std::string input) {
     std::cout << "test2" << std::endl;
     if (input.empty())
         return false;
     size_t find_arg = input.find("?");
-    if (find_arg == std::string::npos)
-        return false;
     std::string str;
     if (find_arg != std::string::npos) {
         str = input.substr(0, find_arg);
@@ -765,26 +776,33 @@ void handle_connection(int client_fd, running_server* server) {
     int config_server_index = match_against_config_domains(server, user_request);
     if (config_server_index == -1) {
         std::cout << "match_against_config_domains failed 3\n";
-        std::string response = get_error_response(404);
+        method_type cur_method = get_method_type(user_request);
+        std::string response = get_error_response(404, cur_method, nullptr);
         send(client_fd, response.data(), response.size(), 0);
         return ;
     }
-    std::cout << "eaeogiuheuogtheougheoeuah" << config_server_index <<  std::endl;
-    std::cout << user_request.subdomains[config_server_index].empty() << std::endl;
-    std::cout << "eaeogiuheuogtheougheoeuah" << std::endl;
-    if (user_request.subdomains[config_server_index].empty() != 0 && end_with_py(user_request.subdomains[config_server_index], user_request)) {
+    // std::cout << "eaeogiuheuogtheougheoeuah" << config_server_index <<  std::endl;
+    // std::cout << user_request.subdomains[config_server_index].empty() << std::endl;
+    // std::cout << "|" << user_request.subdomains[config_server_index] << "|" << std::endl;
+    // end_with_py(user_request.subdomains[config_server_index]);
+    // std::cout << "eaeogiuheuogtheougheoeuah" << std::endl;
+
+    if (user_request.subdomains[config_server_index].empty() != 0 && end_with_py(user_request.subdomains[config_server_index])) {
         handle_cgi_request(client_fd, server->subdomain[config_server_index], user_request);
     }
     else if (user_request.methods_asked[GET]) {
+        std::cout << "------ GET go-----" << std::endl;
         handle_get_request(client_fd, server->subdomain[config_server_index], user_request);
     }
     else if (user_request.methods_asked[POST] && user_request.body.find("DELETE") != std::string::npos) {
         handle_del_request(client_fd, server->subdomain[config_server_index], user_request);
     } else {
         std::cout << "Unknown method sent\n";
-        std::string response = get_error_response(405);
+        method_type cur_method = get_method_type(user_request);
+        std::string response = get_error_response(405, cur_method, nullptr);
+        std::cout << response << std::endl;
         send(client_fd, response.data(), response.size(), 0);
-        return ;
+        // return ;
     }
     
     // ! the random segfault happens afater this point 
@@ -801,7 +819,6 @@ void handle_connection(int client_fd, running_server* server) {
 
 
 UserRequestInfo extract_from_buffer(char *buffer);
-std::string get_error_response(int code);
 
 std::string match_code(int code_n) {
     std::string code;
