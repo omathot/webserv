@@ -344,11 +344,16 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
         else if (is_method_allowed(user_request, server.loc_method[config_path_index]) != 0) {
             std::cout << "match_against_config_domains failed 2" << std::endl;
             response = get_error_response(401, GET, &server);
-        } else if (!server.index.empty())
+        } else if (!server.index.empty() && config_parsed.surplus.empty())
             response = handle_single_connetion(user_request, 
                     server.loc_method[config_path_index],
                     server.root,
                     server.index);
+        else if (!server.loc_method[config_path_index].index.empty() && config_parsed.surplus.empty())
+            response = handle_single_connetion(user_request, 
+                server.loc_method[config_path_index],
+                server.root,
+                server.loc_method[config_path_index].index);
         else if (is_surplus_valid_file(config_parsed.surplus, server.root)) {
             config_parsed.surplus.pop_back();
             std::string path = server.root + config_parsed.surplus;
