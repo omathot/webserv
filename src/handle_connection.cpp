@@ -786,13 +786,16 @@ void handle_connection(int client_fd, running_server* server) {
         send(client_fd, response.data(), response.size(), 0);
         return ;
     }
-    // std::cout << "eaeogiuheuogtheougheoeuah" << config_server_index <<  std::endl;
-    // std::cout << user_request.subdomains[config_server_index].empty() << std::endl;
+    std::cout << config_server_index << std::endl;
     // std::cout << "|" << user_request.subdomains[config_server_index] << "|" << std::endl;
-    // end_with_py(user_request.subdomains[config_server_index]);
-    // std::cout << "eaeogiuheuogtheougheoeuah" << std::endl;
 
-    if (user_request.subdomains[config_server_index].empty() != 0 && end_with_py(user_request.subdomains[config_server_index])) {
+    std::cout << "eaeogiuheuogtheougheoeuah" << config_server_index <<  std::endl;
+    // std::cout << user_request.subdomains[config_server_index].empty() << std::endl;
+    // std::cout << "|" << user_request.subdomains.size() << "|" << std::endl;
+    // end_with_py(user_request.subdomains[config_server_index]);
+    std::cout << "eaeogiuheuogtheougheoeuah" << std::endl;
+
+    if (!user_request.subdomains.empty() &&  end_with_py(user_request.subdomains[config_server_index])) {
         handle_cgi_request(client_fd, server->subdomain[config_server_index], user_request);
     }
     else if (user_request.methods_asked[GET]) {

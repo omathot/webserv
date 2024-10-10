@@ -13,6 +13,32 @@ bool exists_test (const std::string& name) {
     return f.good();
 }
 
+std::string file_time_to_string(const std::filesystem::file_time_type& file_time) {
+    // Convert file_time to system clock time_point
+    auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+        file_time - std::filesystem::file_time_type::clock::now() + 
+        std::chrono::system_clock::now());
+
+    // Convert to time_t
+    std::time_t time = std::chrono::system_clock::to_time_t(sctp);
+
+    // Convert to local time struct
+    std::tm* local_time = std::localtime(&time);
+
+    // Format as string
+    std::ostringstream oss;
+    oss << std::put_time(local_time, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
+
+// Usage example
+void process_directory_entry(const std::filesystem::directory_entry& entry) {
+    auto file_time = entry.last_write_time();
+    std::string time_str = file_time_to_string(file_time);
+    std::cout << "Last write time of " << entry.path() << ": " << time_str << std::endl;
+}
+
 std::string make_hyper_link(std::string true_url, std::string file_name, std::string display) {
     std::string hyper_link = "<a href=\"";
     hyper_link.append(true_url + "/" + file_name);
@@ -51,7 +77,9 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
     if (!virtual_root.empty() && virtual_root != "/")
         body.append("<tr>\n<th>" + make_hyper_link(true_url, get_path_parrent(root, virtual_root, true_url), "..") +  + "</th> </tr>\n");
     for (const auto & entry : std::filesystem::directory_iterator(root + virtual_root)) {
-
+        auto file_t_time = entry.last_write_time();
+        std::string t = file_time_to_string(file_t_time);
+        
         std::string temp = "<tr>\n";
         for (size_t i = 0; i < 3; i++)
         {
@@ -67,8 +95,8 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
                 //     temp.append(entry.path().filename().string());
                 }
             } else if (i == 1) {
+                temp.append(t);
                 // std::ostringstream oss;
-                temp.append(entry.path().filename().string());
                 // oss << std::put_time((entry.last_write_time().), "%d-%m-%Y %H-%M-%S");
                 // temp.append(oss.str());
                 // temp.append(std::format("{}", ));
