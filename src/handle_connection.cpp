@@ -696,6 +696,8 @@ void handle_del_request(int client_fd, server &server, UserRequestInfo &user_req
     size_t start_idx = user_request.body.rfind('=');
     std::string filename = user_request.body.substr(start_idx + 1);
     std::string pa = server.root + "Downloads/" + filename;
+    pa.erase(remove_if(pa.begin(), pa.end(), isspace), pa.end());
+    std::cout << "---PA: " << pa << "---" << std::endl;
     std::ifstream f(pa);
     if (f.good() && !filename.empty()) {
         std::remove(pa.c_str());
