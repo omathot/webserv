@@ -4,7 +4,7 @@
 #include <chrono>
 
 std::vector<std::string> get_all_server_files(std::string root);
-std::string get_error_response(int code);
+std::string get_error_response(int code, method_type method_type, server *server);
 std::vector<std::string> my_strsplit(std::string src, char delemiter);
 
 
@@ -61,7 +61,7 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
     if (!exists_test(root + virtual_root))
     {
         std::cout << root + virtual_root << std::endl;
-        return (get_error_response(500));
+        return (get_error_response(500, GET, nullptr));
     }
     std::string true_url = "http://localhost:";
     true_url.append(cur_url);

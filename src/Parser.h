@@ -19,6 +19,7 @@ struct method_path_option {
         std::string path;
         std::string cgi_path;
         std::string cgi_execute;
+        std::string index;
         bool autoindex;
         std::map<method_type, bool> method_type_allowed;
 };
