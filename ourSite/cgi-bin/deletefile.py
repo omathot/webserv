@@ -26,7 +26,7 @@ if method and method.upper() == 'DELETE' and filename:
     filename = os.path.basename(filename.strip())
 
     # Define the path to the directory where files are stored
-    file_dir = "/mnt/e/Construction/webserv/ourSite/Downloads/"
+    file_dir = "/goinfre/sboulain/webserv/ourSite/Downloads/"
     safe_path = os.path.join(file_dir, filename)
 
     # Ensure that the file is within the intended directory

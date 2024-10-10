@@ -45,6 +45,7 @@
 
     <form name="deletefile" action="http://localhost:8070/main.com/cgi-bin/deletefile.py" method="post">
         <label for="filename">Enter file name to delete:</label>
+        <input type="hidden" name="_method" value="DELETE">
         <input type="text" name="filename" id="filename" required>
         <input type="submit" value="Delete File">
     </form>
@@ -58,7 +59,7 @@
     </form>
     
     <form action="http://localhost:8070/main.com/files/photos" method="post">
-        <h2>DELETE Request (Simulated)</h2>
+        <h2>DELETE  (Simulated)</h2>
         <p>Note: HTML forms cannot directly make DELETE requests. This form simulates a DELETE request using POST.</p>
         <input type="hidden" name="_method" value="DELETE">
         <label for="delete-filename">Filename to Delete:</label>
