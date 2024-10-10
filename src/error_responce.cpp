@@ -1,4 +1,4 @@
-# include "../lib/includes/webserv.h"
+# include "../lib/includes/webserv.h"   
 
 std::string make_header_response(int code_n, method_type method_type, std::string surplus, size_t size);
 
@@ -11,7 +11,7 @@ std::string make_default_error_page(int code) {
     body.append(std::to_string(code));
     body.append(" Not Found</title>\n<style>\nbody {\n\nfont-family: Arial, sans-serif;\nbackground-color: #f4f4f4;");
     body.append("color: #333;\ntext-align: center;\npadding: 50px;\n}\nh1 {\nfont-size: 50px;\nmargin: 0;\n}\np {\n    font-size: 20px;\n}\na {\n    text-decoration: none;\n    color: #007bff;\n}\n");
-    body.append("a:hover {\n           text-decoration: underline;\n       }\n   </style>\n/head>\nbody>\n   <h1>\n");    
+    body.append("a:hover {\n           text-decoration: underline;\n       }\n   </style>\n</head>\n<body>\n   <h1>\n");    
         
     body.append(std::to_string(code));
     body.append("- Page Not Found</h1>\n<p>Sorry, the page you are looking for does not exist.</p>\n");
@@ -23,11 +23,14 @@ std::string make_default_error_page(int code) {
 std::string get_error_response(int code, method_type method_type, server *server) {
     // std::stringstream buffer;
     std::string body;
-    // if (server != nullpointer !server.error_page[code].empty())
-    //     body = server.error_page[code];
-    // else
-    std::cout << "--------here were----" << std::endl;
+    if (server != nullptr && !server->error_pages.empty() && !server->error_pages[code].empty())
+        std::string path = server->root + server->error_pages[code];
+        std::fstream p;
+        p.open(path.c_str());
+        body = server->error_pages[code];
+    else {
         body = make_default_error_page(code);
+    }
     std::string header = make_header_response(code, method_type, "error.html", body.size());
     header.append(body);
     return (header);

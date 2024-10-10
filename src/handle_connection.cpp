@@ -815,7 +815,6 @@ void handle_connection(int client_fd, running_server* server) {
         // return ;
     }
     
-    // ! the random segfault happens afater this point 
 
     // std::cout << bytes_read << " = bytes_read |" << buffer << "| = buffer and BUFFER_SIZE = " << BUFFER_SIZE << std::endl; 
     // if (bytes_read < BUFFER_SIZE) {
