@@ -412,43 +412,66 @@ std::vector<std::string> splitString(const std::string& str, const std::string& 
     return tokens;
 }
 
-UserRequestInfo extract_from_buffer(char *buffer) {
 
-	UserRequestInfo to_return;
+UserRequestInfo extract_from_buffer(std::string buffer) {
 
+    // std::istringstream iss(buffer);
+    UserRequestInfo to_return;
+        // std::string arg;
 
-	for (auto it = to_return.methods_asked.begin(); it != to_return.methods_asked.end(); it++)
-	{
-		it->second = false;
-	}
-	std::vector<std::string> split_buffer = splitString(buffer, "\r\n");
-	std::vector<std::string> usefull_info = my_strsplit(split_buffer[0], ' ');
-	for (size_t i = 0; i < usefull_info.size(); i++)
-	{
-		if (usefull_info[i].find("GET") != std::string::npos) {
-            std::cout << "GET request\n";
-            to_return.methods_asked[method_type::GET] = true;
-        }
-        if (usefull_info[i].find("POST") != std::string::npos) {
-            std::cout << "POST request\n";
-            to_return.methods_asked[method_type::POST] = true;
-        }
-	}
-    to_return.subdomains = my_strsplit(usefull_info[1], '/');
-    to_return.domain = to_return.subdomains[0];
-    to_return.subdomains.erase(to_return.subdomains.begin());
-    to_return.body = split_buffer.back();
-    split_buffer.pop_back();
-    for (size_t i = 1; i < split_buffer.size(); i++) {
-        size_t collon_index = split_buffer[i].find(":");
-        if (collon_index != std::string::npos) {
-            std::string map_name = split_buffer[i].substr(0, collon_index); 
-            // std::cout << map_name << "|" << std::endl;
-            to_return.header_content[map_name] = split_buffer[i].substr(collon_index + 1);
-        }
+        // * check format of protocol
+    for (auto it = to_return.methods_asked.begin(); it != to_return.methods_asked.end(); it++)
+    {
+    it->second = false;
     }
+    // std::cout << "|buffer=|" << buffer <<  "|============|\n";
+    std::vector<std::string> split_buffer = splitString(buffer, "\r\n");
+        // std::string split_buffer;
+        // std::string delemiter = "\r\n";
+        // std::getline(iss, split_buffer, delemiter);
+    std::vector<std::string> usefull_info = my_strsplit(split_buffer[0], ' ');
+    for (size_t i = 0; i < usefull_info.size(); i++)
+    {
+    if (usefull_info[i].find("GET") != std::string::npos) {
+                to_return.methods_asked[method_type::GET] = true;
+            }
+            if (usefull_info[i].find("POST") != std::string::npos) {
+                to_return.methods_asked[method_type::POST] = true;
+            }
+    }
+        to_return.subdomains = my_strsplit(usefull_info[1], '/');
+    to_return.domain = to_return.subdomains[0];
+        size_t i;
+        for (i = 0; i < split_buffer.size(); i++)
+        {
+            if (split_buffer[i].empty()) {
+                i++;
+                break ;
+            }
+        }
+        size_t parts_in_body = split_buffer.size() - 1 - i; 
+        for (; i < split_buffer.size(); i++)
+        {
+            to_return.body.append(split_buffer[i]);
+            to_return.body.append("\r\n");
+        }
+        for (size_t i = 0; i < parts_in_body; i++)
+        {
+            split_buffer.pop_back();
+        }
+        to_return.subdomains.erase(to_return.subdomains.begin());
     
-	return (to_return);
+        for (size_t i = 1; i < split_buffer.size(); i++) {
+            size_t collon_index = split_buffer[i].find(":");
+            if (collon_index != std::string::npos) {
+                std::string map_name = split_buffer[i].substr(0, collon_index); 
+                if (to_return.header_content[map_name].empty()) {
+                    to_return.header_content[map_name] = split_buffer[i].substr(collon_index + 1);
+                    trim_spaces_semi(to_return.header_content[map_name]);
+                }
+            }
+        }
+    return (to_return);
 }
 
 std::string methodTypeToString(method_type t) {
