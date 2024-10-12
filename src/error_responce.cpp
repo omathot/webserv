@@ -23,11 +23,20 @@ std::string make_default_error_page(int code) {
 std::string get_error_response(int code, method_type method_type, server *server) {
     // std::stringstream buffer;
     std::string body;
-    if (server != nullptr && !server->error_pages.empty() && !server->error_pages[code].empty())
+    if (server != nullptr && !server->error_pages.empty() && !server->error_pages[code].empty()) {
         std::string path = server->root + server->error_pages[code];
         std::fstream p;
+        std::string line;
         p.open(path.c_str());
-        body = server->error_pages[code];
+        if (!p.is_open()) {
+            body = make_default_error_page(code);
+        }
+        else {
+            while (std::getline(p, line)) {
+                body.append(line);
+            }
+        }
+    }
     else {
         body = make_default_error_page(code);
     }
