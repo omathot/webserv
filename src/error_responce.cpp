@@ -1,6 +1,7 @@
 # include "../lib/includes/webserv.h"   
 
 std::string make_header_response(int code_n, method_type method_type, std::string surplus, size_t size);
+std::string match_code(int code_n);
 
 void response_error(int code) {
     std::cout << code <<  " = code | responce_error\n";
@@ -9,13 +10,14 @@ void response_error(int code) {
 std::string make_default_error_page(int code) {
     std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>)\n";
     body.append(std::to_string(code));
-    body.append(" Not Found</title>\n<style>\nbody {\n\nfont-family: Arial, sans-serif;\nbackground-color: #f4f4f4;");
+    body.append(" </title>\n<style>\nbody {\n\nfont-family: Arial, sans-serif;\nbackground-color: #f4f4f4;");
     body.append("color: #333;\ntext-align: center;\npadding: 50px;\n}\nh1 {\nfont-size: 50px;\nmargin: 0;\n}\np {\n    font-size: 20px;\n}\na {\n    text-decoration: none;\n    color: #007bff;\n}\n");
     body.append("a:hover {\n           text-decoration: underline;\n       }\n   </style>\n</head>\n<body>\n   <h1>\n");    
         
-    body.append(std::to_string(code));
-    body.append("- Page Not Found</h1>\n<p>Sorry, the page you are looking for does not exist.</p>\n");
-    body.append("<p><a href=\"/\">Go back to the homepage</a></p>\n</body>\n</html>");
+    // body.append(std::to_string(code));
+    // body.append(" ");
+    body.append(match_code(code));
+    body.append("\n</body>\n</html>");
     // std::cout << body;
     return body;
 }

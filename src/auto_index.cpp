@@ -39,9 +39,37 @@ void process_directory_entry(const std::filesystem::directory_entry& entry) {
     std::cout << "Last write time of " << entry.path() << ": " << time_str << std::endl;
 }
 
+std::string molest_path(std::string domain, std::string file_name) {
+    std::string ret;
+    if (!domain.empty()) {
+        while (domain.back() == '/') {
+            domain.pop_back();
+        }
+        domain.append("/");
+        
+    }
+    std::cout << "Domain: ---" << domain << "---" << std::endl;
+    if (!file_name.empty()) {
+        while (file_name.front() == '/') {
+            file_name.erase(file_name.begin());
+        }
+        // file_name.erase(remove_if(file_name.begin(), file_name.end(), [](char c) { return c == '/'; }), file_name.end());
+        std::cout << "FILE NAME AFTER / REMOVE: ---" << file_name << "---" << std::endl;
+        ret = domain + file_name;
+    } else {
+        ret = domain;
+    }
+    std::cout << "ret: ---" << ret << "---" << std::endl;
+    return ret;
+}
+
 std::string make_hyper_link(std::string true_url, std::string file_name, std::string display) {
     std::string hyper_link = "<a href=\"";
-    hyper_link.append(true_url + "/" + file_name);
+    true_url.erase(remove_if(true_url.begin(), true_url.end(), isspace), true_url.end());
+    std::cout << "True URL: ---" << true_url << "--- file_name: ---" << file_name << "---" << std::endl;
+    hyper_link.append(molest_path(true_url, file_name));
+    
+    std::cout << "hyper_link: ---" << hyper_link << "---" << std::endl;
     hyper_link.append("\">" + display + "</a>");
     return hyper_link;
 }
@@ -62,7 +90,7 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
     if (!exists_test(root + virtual_root))
     {
         std::cout << root + virtual_root << std::endl;
-        return (get_error_response(500, GET, nullptr));
+        return (get_error_response(404, GET, nullptr));
     }
     std::string true_url = "http://localhost:";
     true_url.append(cur_url);
@@ -75,7 +103,7 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
     // for (auto &path : all_files) {
     body.append("<tr>\n<th>Name</th>\n<th>Last modified</th>\n<th>Size</th>\n </tr>\n");
     if (!virtual_root.empty() && virtual_root != "/")
-        body.append("<tr>\n<th>" + make_hyper_link(true_url, get_path_parrent(root, virtual_root, true_url), "..") +  + "</th> </tr>\n");
+        body.append("<tr>\n<th>" + make_hyper_link(true_url, get_path_parrent(root, virtual_root, true_url), "..") + "</th> </tr>\n");
     for (const auto & entry : std::filesystem::directory_iterator(root + virtual_root)) {
         auto file_t_time = entry.last_write_time();
         std::string t = file_time_to_string(file_t_time);
@@ -87,11 +115,17 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
             temp.append("<th>\n");
             if (i == 0) {
                 if (entry.is_directory()) {
-                    temp.append(make_hyper_link(true_url + virtual_root, entry.path().filename().string(), entry.path().filename().string() + "/"));
+                    std::cout << "true url before make_hyper_link: ---" << true_url << "---" << std::endl;
+                    std::cout << "virtual root before make_hyper_link: ---" << virtual_root << "---" << std::endl;
+                    true_url.erase(remove_if(true_url.begin(), true_url.end(), isspace), true_url.end());
+                    std::string domain_n_subdomain = molest_path(true_url, virtual_root);
+                    temp.append(make_hyper_link(domain_n_subdomain, entry.path().filename().string(), entry.path().filename().string() + "/"));
                     // temp.append(entry.path().filename().string());
                     // temp.append("/");
                 } else {
-                    temp.append(make_hyper_link(true_url + virtual_root, entry.path().filename().string(), entry.path().filename().string()));
+                    true_url.erase(remove_if(true_url.begin(), true_url.end(), isspace), true_url.end());
+                    std::string domain_n_subdomain = molest_path(true_url, virtual_root);
+                    temp.append(make_hyper_link(domain_n_subdomain, entry.path().filename().string(), entry.path().filename().string()));
                 //     temp.append(entry.path().filename().string());
                 }
             } else if (i == 1) {

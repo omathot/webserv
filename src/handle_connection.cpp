@@ -28,6 +28,7 @@ std::string make_header_response(int code_num, method_type method_type, std::str
 std::string identifyContentType(std::string s);
 std::string methodTypeToString(method_type t);
 void trim_spaces_semi(std::string &str);
+std::string molest_path(std::string domain, std::string file_name);
 
 
 int match_against_config_domains(running_server* server, UserRequestInfo req) {
@@ -372,10 +373,22 @@ void handle_get_request(int client_fd, server &server, UserRequestInfo &user_req
         }
         else if (server.loc_method[config_path_index].autoindex) {
             // std::cout << server.loc_method[config_path_index].autoindex << "  "<< server.name << std::endl;
-            std::string cur_url = std::to_string(server.port) + "/" + server.name + "/" + server.loc_method[config_path_index].path;
+            std::cout << "path: ---" << server.loc_method[config_path_index].path << "---" << std::endl;
+            std::string cur_url;
+            std::string domain = molest_path(std::to_string(server.port), server.name);
+            if (server.loc_method[config_path_index].path == "/") {
+             cur_url = domain;
+            } else {
+                cur_url = molest_path(domain, server.loc_method[config_path_index].path);
+            }
+            // std::string cur_url = std::to_string(server.port) + "/" + server.name + "/" + server.loc_method[config_path_index].path;
             std::string temp = make_autoindex_body(server.root, config_parsed.surplus, cur_url);
-            response = make_header_response(200, GET, "autoindex.html", temp.size());
-            response.append(temp);
+            if (temp.find("\r\n") == std::string::npos) {
+                response = make_header_response(200, GET, "autoindex.html", temp.size());
+                response.append(temp);
+            } else { 
+                response = temp;
+            }
         } else 
             response = get_error_response(403, GET, &server);
     }
