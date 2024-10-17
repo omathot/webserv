@@ -182,10 +182,9 @@ std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf) 
 
 std::vector<std::string> my_strsplit(std::string src, char delemiter) {
     std::vector<std::string> to_return;// = std::vector<std::string>;
-    size_t start = 0;
     std::string arg;
     std::istringstream iss(src);
-    int i;
+    size_t i;
     // maybe need to be better
     if (src.size() < 2) {
         return {src};
@@ -389,6 +388,7 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         temp.loc_method = treat_loc_method(parser->servers[i]->servers, temp.autoindex);
         all_server->push_back(temp);
     }
+    free_parse(parser);
     return all_server;
 }
 

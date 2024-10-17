@@ -74,7 +74,7 @@ std::string make_hyper_link(std::string true_url, std::string file_name, std::st
     return hyper_link;
 }
 
-std::string get_path_parrent(std::string root, std::string virtual_root, std::string true_url) {
+std::string get_path_parrent(std::string virtual_root, std::string true_url) {
     if (virtual_root.empty()  || virtual_root == "/")
         return (true_url);
     virtual_root.pop_back();
@@ -103,7 +103,7 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
     // for (auto &path : all_files) {
     body.append("<tr>\n<th>Name</th>\n<th>Last modified</th>\n<th>Size</th>\n </tr>\n");
     if (!virtual_root.empty() && virtual_root != "/")
-        body.append("<tr>\n<th>" + make_hyper_link(true_url, get_path_parrent(root, virtual_root, true_url), "..") + "</th> </tr>\n");
+        body.append("<tr>\n<th>" + make_hyper_link(true_url, get_path_parrent(virtual_root, true_url), "..") + "</th> </tr>\n");
     for (const auto & entry : std::filesystem::directory_iterator(root + virtual_root)) {
         auto file_t_time = entry.last_write_time();
         std::string t = file_time_to_string(file_t_time);

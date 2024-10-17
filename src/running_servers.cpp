@@ -3,11 +3,21 @@
 std::vector<server > *make_all_server(std::ifstream &fileToRead);
 std::ostream& operator<<(std::ostream& o, const std::vector<server>* to_printf);
 // const char *config_loc = "config/default.conf";
-const char *config_loc = "config/ourDefault.conf";
+RunningServers::RunningServers(char *config_path) {
+	this->MakeRunningServer(config_path);
+}
 
 
 RunningServers::RunningServers() {
-	std::ifstream inputFile(config_loc);
+  const char* temp = "config/ourDefault.conf";
+  char* config_loc = new char[strlen(temp) + 1];
+  strcpy(config_loc, temp);
+	this->MakeRunningServer(config_loc);
+	delete[] config_loc;
+}
+
+void RunningServers::MakeRunningServer(char *config_loc) {
+    std::ifstream inputFile(config_loc);
     if (!inputFile.is_open()) {
         std::cerr << "Error opening config file" << std::endl;
         exit(1);
@@ -16,7 +26,7 @@ RunningServers::RunningServers() {
     std::cout << "stest" << std::endl;
     std::vector<int> ports;
     std::map<int, running_server *> running;
-    for (int x = 0; x < servers->size(); x++) {
+    for (size_t x = 0; x < servers->size(); x++) {
         bool is_in = false;
         for (size_t i = 0; i < ports.size(); i++)
         {
@@ -26,11 +36,12 @@ RunningServers::RunningServers() {
         if (!is_in)
             ports.push_back((*servers)[x].port);
     }
-    for (int x = 0; x < ports.size(); x++) {
+    for (size_t x = 0; x < ports.size(); x++) {
         running_server *in_making = new running_server;
         in_making->_socket = new ServerSocket(AF_INET, SOCK_STREAM, 0, ports[x], INADDR_ANY);
+        std::cout << "shouldn't print" << std::endl;
 
-        for (int i = 0; i <= servers->size(); i++) {
+        for (size_t i = 0; i <= servers->size(); i++) {
             if ((*servers)[i].port == ports[x]) {
                 in_making->subdomain.push_back((*servers)[i]);
             }
@@ -40,19 +51,25 @@ RunningServers::RunningServers() {
     inputFile.close();
     _nfds = servers->size();  // Assuming one fd per server
     _track_fds.reserve(_nfds);
-    int index = 0;
     for (auto it = running.begin(); it != running.end(); it++) {
 		std::cout << it->first << "  " << it->second->_socket->getSocketFd() << std::endl;
 		push_and_update(it->second->_socket->getSocketFd());
         _fd_to_port[it->second->_socket->getSocketFd()] =it->first;
     }
 	_servers = running;
+    delete servers;
 	// std::cout << servers << std::endl;
 	std::cout << "Hello" << std::endl;
 }
 
-RunningServers::~RunningServers() {
 
+
+RunningServers::~RunningServers() {
+  std::cout << "!!!!!FREEING RUNNING_SERVERS!!!!!" << std::endl;
+  for (const auto &it : this->_servers) {
+    delete it.second->_socket;
+    delete it.second;
+  }
 }
 
 void	RunningServers::push_and_update(int fd) {
@@ -72,6 +89,5 @@ void	RunningServers::remove_fd(int fd) {
 
 
 pollfd* RunningServers::get_track_fds_array() {
-	pollfd* poll_events= new pollfd[_nfds];
     return _track_fds.data();  // Returns a pointer to the underlying array
 }
