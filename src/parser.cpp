@@ -235,7 +235,6 @@ std::map<int, std::string> treat_error_pages(std::string all) {
         } else {
             std::string template_file;
             template_file = cur_config[cur_config.size() - 1];
-            std::cout << template_file <<std::endl;
             size_t loc_x = template_file.find('x'); 
             if (loc_x == template_file.size()) {
                 std::cerr << "error_page template doesn't have a x: " << template_file << '\n';
