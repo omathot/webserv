@@ -352,11 +352,11 @@ void handle_get_request(int client_fd, server &server,
         cur_url = molest_path(domain, server.loc_method[config_path_index].path);
       }
       std::string temp = make_autoindex_body(server.root, config_parsed.surplus, cur_url);
-      if (temp.find("\r\n") == std::string::npos) {
+      if (temp == "X") {
+        response = get_error_response(404, GET, &server);
+      } else {
         response = make_header_response(200, GET, "autoindex.html", temp.size());
         response.append(temp);
-      } else {
-        response = temp;
       }
     } else
       response = get_error_response(403, GET, &server);

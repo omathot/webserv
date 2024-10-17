@@ -83,7 +83,8 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
         virtual_root.append(path);
     if (!exists_test(root + virtual_root))
     {
-        return (get_error_response(404, GET, nullptr));
+        std::string temp = "X";
+        return (temp);
     }
     std::string true_url = "http://localhost:";
     true_url.append(cur_url);

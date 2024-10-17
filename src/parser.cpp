@@ -52,11 +52,11 @@ Parse *make_parse(std::ifstream &fileToRead) {
         else
             no_commants = buffer;
         if (no_commants.find('{') != std::string::npos) {
-            (*my_parse).servers.push_back(make_parse(fileToRead)); // make a new child parse and added it to the vector
+            my_parse->servers.push_back(make_parse(fileToRead)); // make a new child parse and added it to the vector
             if (no_commants.find(loc_triger) != std::string::npos) {
             size_t start = no_commants.find(loc_triger) + loc_triger.size();
             size_t len = start - no_commants.find('{');
-                (*my_parse).servers.back()->loc_name =
+                my_parse->servers.back()->loc_name =
                     no_commants.substr(start, len);
             }
         }
@@ -64,11 +64,18 @@ Parse *make_parse(std::ifstream &fileToRead) {
             true_start = find_true_start(no_commants);
             space_loc = find_true_space(no_commants);
             key_word = no_commants.substr(true_start, space_loc);
-            if ( (*my_parse).basic.find(key_word) != (*my_parse).basic.end()) { // this is to see if it is already an existant key
-                (*my_parse).basic[key_word].append(no_commants.substr(space_loc + true_start, no_commants.length())); // if the key already exist I append the new value to the old one with the ;
+            if ( !my_parse->basic[key_word].empty()) { // this is to see if it is already an existant key
+                std::string temp = my_parse->basic[key_word];
+                temp.erase(0, temp.find_first_not_of(" \t\n\r\f\v"));
+                temp.erase(temp.find_last_not_of(" \t\n\r\f\v") + 1);
+                std::string add = no_commants.substr(space_loc + true_start);
+                add.erase(0, add.find_first_not_of(" \t\n\r\f\v"));
+                add.erase(add.find_last_not_of(" \t\n\r\f\v") + 1);
+                std::string ret = temp + add;
+                my_parse->basic[key_word] = ret; // if the key already exist I append the new value to the old one with the ;
             }
             else {
-                (*my_parse).basic[key_word] = no_commants.substr(space_loc + true_start, no_commants.length());
+                my_parse->basic[key_word] = no_commants.substr(space_loc + true_start);
             }
         } else if (no_commants.find('}')!= std::string::npos) {
             break ;
@@ -81,6 +88,7 @@ Parse *make_parse(std::ifstream &fileToRead) {
         if (fileToRead.eof())
             break ;
     }
+
     return my_parse;
 }
 
@@ -208,6 +216,8 @@ std::map<int, std::string> treat_error_pages(std::string all) {
     int key;
     std::string value;
     for (size_t i = 0; i < all_config.size(); i++) {
+        // cur_config[0] = all_config[i].substr(0,);
+        // cur_config[0] = all_config[i].substr(3);
         cur_config = my_strsplit(all_config[i], ' ');
         if (cur_config.size() == 2) {
             try {
@@ -225,6 +235,7 @@ std::map<int, std::string> treat_error_pages(std::string all) {
         } else {
             std::string template_file;
             template_file = cur_config[cur_config.size() - 1];
+            std::cout << template_file <<std::endl;
             size_t loc_x = template_file.find('x'); 
             if (loc_x == template_file.size()) {
                 std::cerr << "error_page template doesn't have a x: " << template_file << '\n';
@@ -233,8 +244,7 @@ std::map<int, std::string> treat_error_pages(std::string all) {
             for (size_t i = 0; i < cur_config.size() - 1; i++) {
                 try {
                     key = std::stoi(cur_config[i]);
-                    to_return[key] =
-                    template_file.substr(0, template_file.size());
+                    to_return[key] = template_file.substr(0, template_file.size());
                     to_return[key] = to_return[key].erase(loc_x, 1);
                     to_return[key] = to_return[key].insert(loc_x, cur_config[i]);
                 }
@@ -367,7 +377,9 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
             temp.redirect.empty = true;
         temp.uploads_dir = (parser->servers[i]->basic)["uploads_dir"];
         temp.autoindex = parser->servers[i]->basic["autoindex"].find("on") != std::string::npos;
-        temp.error_pages = treat_error_pages(parser->servers[i]->basic["error_page"]);
+        if (!parser->servers[i]->basic["error_page"].empty()) {
+            temp.error_pages = treat_error_pages(parser->servers[i]->basic["error_page"]);
+        }
         temp.index = parser->servers[i]->basic["index"];
         if (!temp.index.empty())
             trim_spaces_semi(temp.index);
