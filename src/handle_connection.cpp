@@ -16,7 +16,8 @@
 // # include "Parser.h"
 #include "Request.h"
 #include <chrono>
-#include <time.h>
+#include <time.h>
+
 
 #include <unistd.h>
 
@@ -38,7 +39,6 @@ int match_against_config_domains(running_server *server, UserRequestInfo req) {
   for (size_t i = 0; i < server->subdomain.size(); i++) {
     // if (server->subdomain[i].name.size() > req.domain.size() - 1
     //     && server->subdomain[i].name.size() < req.domain.size() + 3) {
-    std::cout << "|" << server->subdomain[i].name << "|" << req.domain << "|" << std::endl;
     cur_size_read = std::strcmp(server->subdomain[i].name.c_str(), req.domain.c_str());
     if (cur_size_read == 0)
       return (i);
@@ -166,12 +166,7 @@ method_type is_method_ask(UserRequestInfo &user_request) {
   return (GET);
 }
 
-int is_method_allowed(UserRequestInfo &user_request,
-                      method_path_option &cur_path) {
-  for (int method = GET; method <= HEADER; method++) {
-    std::cout << cur_path.method_type_allowed[static_cast<method_type>(method)]
-              << std::endl;
-  }
+int is_method_allowed(UserRequestInfo &user_request, method_path_option &cur_path) {
   for (int method = GET; method <= HEADER; method++) {
     if (user_request.methods_asked[static_cast<method_type>(method)] == true) {
       if (cur_path.method_type_allowed[static_cast<method_type>(method)]) {
@@ -210,7 +205,6 @@ std::string handle_single_connetion(std::string &root, std::string html_page) {
   std::string response;
   std::string path = root + "/" + html_page;
   std::fstream index(path);
-  // std::cout <<"|" <<path<<"|" << std::endl;
   std::string content_responce;
   std::string line;
   if (!index.is_open()) {
@@ -229,10 +223,8 @@ std::string handle_single_connetion(std::string &root, std::string html_page) {
 std::string handle_single_connection_no_subdomain(std::string &root,
                                                   std::string html_page) {
   std::string response;
-  std::cout << "|" << html_page << "| root before" << std::endl;
   std::string path = root + "/" + html_page;
   std::fstream index(path);
-  std::cout << "|" << path << "|" << std::endl;
   std::string content_responce;
   std::string line;
   if (!index.is_open()) {
@@ -268,7 +260,6 @@ std::string handle_single_redirection(int ret_val, std::string &redirection) {
 std::vector<std::string> get_all_server_files(std::string root) {
   std::vector<std::string> vec;
   for (const auto &entry : std::filesystem::directory_iterator(root)) {
-    // std::cout << entry.path() << std::endl;
     vec.push_back(entry.path().filename().string());
   }
   return vec;
@@ -353,10 +344,6 @@ void handle_get_request(int client_fd, server &server,
           response = get_error_response(404, GET, &server);
         }
     } else if (server.loc_method[config_path_index].autoindex) {
-      // std::cout << server.loc_method[config_path_index].autoindex << "  "<<
-      // server.name << std::endl;
-      std::cout << "path: ---" << server.loc_method[config_path_index].path
-                << "---" << std::endl;
       std::string cur_url;
       std::string domain = molest_path(std::to_string(server.port), server.name);
       if (server.loc_method[config_path_index].path == "/") {
@@ -375,59 +362,7 @@ void handle_get_request(int client_fd, server &server,
       response = get_error_response(403, GET, &server);
   }
   send(client_fd, response.data(), response.size(), 0);
-  std::cout << "\n\n\n";
 }
-
-// void handle_post_request(int client_fd, server &server, UserRequestInfo
-// &user_request) {
-//     // size_t delemite_content_type = user_request.body.find("Content-Type");
-//     // size_t delemite_filename = user_request.body.find("filename");
-//     // std::cout << user_request.body << std::endl << std::endl;
-//     std::string response;
-//     // std::cout << delemite_filename << " = delemite_filename |
-//     delemite_content_type = " << delemite_content_type << " npos = " <<
-//     std::string::npos << std::endl; if
-//     (user_request.header_content["Content-Disposition"].empty()) {
-//         std::string temp = "<h1>Post resquest Denied</h1>";
-//         response = make_header_response(403, POST, "post.html", temp.size());
-//         response.append(temp);
-//     } else {
-//         size_t delemite_filename =
-//         user_request.header_content["Content-Disposition"].find("filename");
-//         size_t file_name_del =
-//         user_request.header_content["Content-Disposition"].find("\"",
-//         delemite_filename) + 1; size_t file_name_del_end =
-//         user_request.header_content["Content-Disposition"].find("\"",
-//         file_name_del); std::string filename =
-//         user_request.header_content["Content-Disposition"].substr(file_name_del,
-//         file_name_del_end);
-
-//         // size_t start_of_file_content = user_request.body.find("\n",
-//         delemite_content_type) + 1; std::string file_content =
-//         user_request.body; std::cout << server.root + "download/" + filename;
-//         std::fstream download(server.root + "download/" + filename);
-//         download << file_content;
-//         std::string body = "<h1>Post resquest fuffiled</h1>";
-//         // response = make_header_response(201, POST, "post.html",
-//         body.size());
-//         // response.append(body);
-//         // std::cout << response << std::endl;
-//         response = R"(HTTP/1.1 201 Created
-// Content-Type: application/json
-// Content-Length: 128
-// Location: https://api.example.com/files/newfile.txt
-// Date: Sun, 29 Sep 2024 12:00:00 GMT
-
-// {
-//   "id": "file123",
-//   "filename": "newfile.txt",
-//   "size": 1024,
-//   "created_at": "2024-09-29T12:00:00Z",
-//   "message": "File created successfully"
-// })";
-//     }
-//     send(client_fd, response.data(), response.size(), 0);
-// }
 
 size_t find_cgi_path(server &server) {
   for (size_t i = 0; i < server.loc_method.size(); i++) {
@@ -638,77 +573,6 @@ void handle_cgi_request(int client_fd, server &server,
   send(client_fd, response.data(), response.size(), 0);
 }
 
-// void handle_cgi_request(int client_fd, server &server, UserRequestInfo
-// &user_request) {
-//     size_t index_config_cgi = find_cgi_path(server);
-//     std::string response;
-//     std::string body;
-//     if (index_config_cgi == -1) {
-//         // no python gin in here
-//         response = get_error_response(459);
-//     } else {
-//         std::cout << "started forking" << std::endl;
-//         int pipefd[2];
-//         if (pipe(pipefd) == -1) {
-//             perror("pipe");
-//             response = get_error_response(422);
-//             send(client_fd, response.data(), response.size(), 0);
-//         }
-//         int pid = fork();
-//         if (pid == -1) {
-//             response = get_error_response(459);
-//         } else {
-//             if (pid == 0) {
-//                 close(pipefd[0]);
-//                 if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
-//                     perror("dup2");
-//                     response = get_error_response(422);
-//                     send(client_fd, response.data(), response.size(), 0);
-//                 }
-//                 char ** argv = make_arg_cgi(user_request.subdomains.back(),
-//                 server.root,
-//                     server.loc_method[index_config_cgi].path,
-//                     server.loc_method[index_config_cgi].cgi_path);
-
-//                 // size_t end_script_name =
-//                 user_request.subdomains.back().rfind('?');
-//                 // std::string path_to_script = server.root +
-//                 server.loc_method[index_config_cgi].path.substr(1)
-//                 //     + "/" + user_request.subdomains.back().substr(0 ,
-//                 end_script_name);
-//                 // char * const argv[] =
-//                 {const_cast<char*>(server.loc_method[index_config_cgi].cgi_path.c_str()),
-//                 //         const_cast<char*>(path_to_script.c_str()), NULL};
-//                 int i = 0;
-//                 while (argv[i] != nullptr)
-//                 {
-//                     std::cout << argv[i] << std::endl;
-//                     i++;
-//                 }
-
-//                 execve(server.loc_method[index_config_cgi].cgi_path.c_str(),
-//                 argv, NULL); free_argv(argv);
-//             } else {
-//                 close(pipefd[1]);
-//                 char buffer[1024];
-//                 ssize_t count;
-//                 std::string output;
-//                 while ((count = read(pipefd[0], buffer, sizeof(buffer) - 1))
-//                 > 0) {
-//                     buffer[count] = '\0';
-//                     body += buffer;
-//                 }
-//                 close(pipefd[0]);
-//                 wait(nullptr);
-//             }
-//             response = make_header_response(200, GET, "python.html",
-//             body.size()); response.append(body);
-//             // waitpid(pid);
-//         }
-//     }
-//     send(client_fd, response.data(), response.size(), 0);
-
-// }
 void handle_del_request(int client_fd, server &server,
                         UserRequestInfo &user_request) {
   std::string response;
@@ -716,7 +580,6 @@ void handle_del_request(int client_fd, server &server,
   std::string filename = user_request.body.substr(start_idx + 1);
   std::string pa = server.root + "Downloads/" + filename;
   pa.erase(remove_if(pa.begin(), pa.end(), isspace), pa.end());
-  std::cout << "---PA: " << pa << "---" << std::endl;
   std::ifstream f(pa);
   if (f.good() && !filename.empty()) {
     std::remove(pa.c_str());
@@ -732,7 +595,6 @@ void handle_del_request(int client_fd, server &server,
 }
 
 bool end_with_py(std::string input) {
-  std::cout << "test2" << std::endl;
   if (input.empty())
     return false;
   size_t find_arg = input.find("?");
@@ -782,7 +644,6 @@ void handle_connection(int client_fd, running_server *server) {
   //     bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
   //     full_buffer.append(buffer);
   // }
-  std::cout << "user request is =\n|" << full_buffer << "|\n";
   buffer[bytes_read] = '\0';
 
   if (bytes_read < 0) {
@@ -805,22 +666,11 @@ void handle_connection(int client_fd, running_server *server) {
     send(client_fd, response.data(), response.size(), 0);
     return;
   }
-  std::cout << config_server_index << std::endl;
-  // std::cout << "|" << user_request.subdomains[config_server_index] << "|" <<
-  // std::endl;
-
-  std::cout << "eaeogiuheuogtheougheoeuah" << config_server_index << std::endl;
-  // std::cout << user_request.subdomains[config_server_index].empty() <<
-  // std::endl; std::cout << "|" << user_request.subdomains.size() << "|" <<
-  // std::endl; end_with_py(user_request.subdomains[config_server_index]);
-  std::cout << "eaeogiuheuogtheougheoeuah" << std::endl;
-
   if (!user_request.subdomains.empty() &&
       end_with_py(user_request.subdomains[config_server_index])) {
     handle_cgi_request(client_fd, server->subdomain[config_server_index],
                        user_request);
   } else if (user_request.methods_asked[GET]) {
-    std::cout << "------ GET go-----" << std::endl;
     handle_get_request(client_fd, server->subdomain[config_server_index],
                        user_request);
   } else if (user_request.methods_asked[POST] &&
@@ -831,19 +681,9 @@ void handle_connection(int client_fd, running_server *server) {
     std::cout << "Unknown method sent\n";
     method_type cur_method = get_method_type(user_request);
     std::string response = get_error_response(405, cur_method, nullptr);
-    std::cout << response << std::endl;
     send(client_fd, response.data(), response.size(), 0);
     // return ;
   }
-
-  // std::cout << bytes_read << " = bytes_read |" << buffer << "| = buffer and
-  // BUFFER_SIZE = " << BUFFER_SIZE << std::endl; if (bytes_read < BUFFER_SIZE)
-  // {
-  //     std::cout << "did go in if \n";
-  //     const char* response = "HTTP/1.1 200 OK\r\nContent-Type:
-  //     text/html\r\nContent-Length: 13\r\n\r\n<h1>PPOOPP</h1>";
-  //     send(client_fd, response, strlen(response), 0);
-  // }
 
   close(client_fd);
 }
@@ -908,12 +748,6 @@ std::string match_code(int code_n) {
 std::string make_header_response(int code_n, method_type method_type,
                                  std::string surplus, size_t size) {
   Request req = Request(code_n, surplus, method_type);
-  if (method_type == POST)
-    std::cout << "---MAKING POST HEADER---" << std::endl;
-  else if (method_type == DELETE)
-    std::cout << "---MAKING DELETE HEADER---" << std::endl;
-  else
-    std::cout << "---MAKING GET HEADER---" << std::endl;
   char date_buff[20];
   auto now = std::chrono::system_clock::now();
   auto now_c = std::chrono::system_clock::to_time_t(now);
@@ -936,9 +770,6 @@ std::string make_header_response(int code_n, method_type method_type,
   oss << size << "\n";
   oss << "Connection close" << "\r\n";
   oss << "\r\n";
-  std::cout << "---HEADER PRINTOUT HERE---" << std::endl;
-  std::cout << "(" << oss.str() << ")";
-  std::cout << "--- ---" << std::endl;
   return (oss.str());
 }
 

@@ -23,7 +23,6 @@ void RunningServers::MakeRunningServer(char *config_loc) {
         exit(1);
     }
     std::vector<server> *servers = make_all_server(inputFile);
-    std::cout << "stest" << std::endl;
     std::vector<int> ports;
     std::map<int, running_server *> running;
     for (size_t x = 0; x < servers->size(); x++) {
@@ -39,8 +38,6 @@ void RunningServers::MakeRunningServer(char *config_loc) {
     for (size_t x = 0; x < ports.size(); x++) {
         running_server *in_making = new running_server;
         in_making->_socket = new ServerSocket(AF_INET, SOCK_STREAM, 0, ports[x], INADDR_ANY);
-        std::cout << "shouldn't print" << std::endl;
-
         for (size_t i = 0; i <= servers->size(); i++) {
             if ((*servers)[i].port == ports[x]) {
                 in_making->subdomain.push_back((*servers)[i]);
@@ -52,20 +49,16 @@ void RunningServers::MakeRunningServer(char *config_loc) {
     _nfds = servers->size();  // Assuming one fd per server
     _track_fds.reserve(_nfds);
     for (auto it = running.begin(); it != running.end(); it++) {
-		std::cout << it->first << "  " << it->second->_socket->getSocketFd() << std::endl;
 		push_and_update(it->second->_socket->getSocketFd());
         _fd_to_port[it->second->_socket->getSocketFd()] =it->first;
     }
 	_servers = running;
     delete servers;
-	// std::cout << servers << std::endl;
-	std::cout << "Hello" << std::endl;
 }
 
 
 
 RunningServers::~RunningServers() {
-  std::cout << "!!!!!FREEING RUNNING_SERVERS!!!!!" << std::endl;
   for (const auto &it : this->_servers) {
     delete it.second->_socket;
     delete it.second;

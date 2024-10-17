@@ -208,13 +208,11 @@ std::map<int, std::string> treat_error_pages(std::string all) {
     int key;
     std::string value;
     for (size_t i = 0; i < all_config.size(); i++) {
-        // std::cout << "doint this config error page rn (" << all_config[i] << ")\n";
         cur_config = my_strsplit(all_config[i], ' ');
         if (cur_config.size() == 2) {
             try {
                 key = std::stoi(cur_config[0]);
                 if (to_return.find(key) != to_return.end()) {
-                    std::cout << "nooooon don't\n";
                     std::stoi("no!!!!!");
                 }
                 to_return[key] = cur_config[1];
@@ -287,7 +285,6 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
         if (methot_temp.path[methot_temp.path.size() - 1] == '{')
             methot_temp.path.erase(methot_temp.path.size() - 1, 1);
         trim_spaces_semi(methot_temp.path);
-        // std::cout << methot_temp.path << "|\n";
         if (!method[i]->basic["cgi_path"].empty()) {
             methot_temp.cgi_path = method[i]->basic["cgi_path"];
             trim_spaces_semi(methot_temp.cgi_path);
@@ -300,12 +297,10 @@ std::vector<method_path_option>  treat_loc_method(std::vector<Parse *> method, b
             methot_temp.autoindex = method[i]->basic["autoindex"].find("on") != std::string::npos;
         }
         if (!method[i]->basic["index"].empty()) {
-            std::cout << "----- here was here =----" << std::endl;
             methot_temp.index = method[i]->basic["index"];
             trim_spaces_semi(methot_temp.index);
         }
         if (!method[i]->basic["allow"].empty()) {
-            // std::cout << methot_temp.path << "|| " << method[i]->basic["allow"] << std::endl; 
             methot_temp.method_type_allowed[GET] = (method[i]->basic["allow"]).find("GET") != std::string::npos;
             methot_temp.method_type_allowed[POST] = (method[i]->basic["allow"]).find("POST") != std::string::npos;
             methot_temp.method_type_allowed[DELETE] = (method[i]->basic["allow"]).find("DELETE") != std::string::npos;
@@ -335,7 +330,6 @@ ConfigComponent build_config_component(std::string &str) {
     std::string buff;
     std::istringstream stream(str);
     std::getline(stream, buff, ' ');
-    // std::cout << buff << std::endl;
     try {
         component.retValue = std::stoi(buff);    
     } catch (...) {
@@ -343,7 +337,6 @@ ConfigComponent build_config_component(std::string &str) {
     }
     
     std::getline(stream, buff, ' ');
-    // std::cout << buff << std::endl;
 
     component.path = buff;
     component.empty = false;
@@ -367,18 +360,14 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
         if (temp.root.back() != '/')
             temp.root.append("/");
         if (!(parser->servers[i]->basic)["redirect"].empty()) {
-            // std::cout << (parser->servers[i]->basic)["redirect"] << "|\n";
             trim_spaces_semi((parser->servers[i]->basic)["redirect"]);
             temp.redirect = build_config_component((parser->servers[i]->basic)["redirect"]);
-            // std::cout << temp.redirect << "|\n";
         }
         else 
             temp.redirect.empty = true;
         temp.uploads_dir = (parser->servers[i]->basic)["uploads_dir"];
         temp.autoindex = parser->servers[i]->basic["autoindex"].find("on") != std::string::npos;
         temp.error_pages = treat_error_pages(parser->servers[i]->basic["error_page"]);
-        // std::cout << "did one errorpage\n";
-        // std::cin >> useless;
         temp.index = parser->servers[i]->basic["index"];
         if (!temp.index.empty())
             trim_spaces_semi(temp.index);
@@ -391,8 +380,6 @@ std::vector<server > *make_all_server(std::ifstream &fileToRead) {
     free_parse(parser);
     return all_server;
 }
-
-const int BACKLOG = 10;
 
 std::vector<std::string> splitString(const std::string& str, const std::string& delimiter) {
     std::vector<std::string> tokens;
@@ -420,11 +407,7 @@ UserRequestInfo extract_from_buffer(std::string buffer) {
 	{
 		it->second = false;
 	}
-	// std::cout << "|buffer=|" << buffer <<  "|============|\n";
 	std::vector<std::string> split_buffer = splitString(buffer, "\r\n");
-    // std::string split_buffer;
-    // std::string delemiter = "\r\n";
-    // std::getline(iss, split_buffer, delemiter);
 	std::vector<std::string> usefull_info = my_strsplit(split_buffer[0], ' ');
 	for (size_t i = 0; i < usefull_info.size(); i++)
 	{

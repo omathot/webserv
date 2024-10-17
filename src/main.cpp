@@ -6,7 +6,6 @@
 #include "running_servers.h"
 # include "Parser.h"
 
-const int PORT = 8080;
 Parse *make_parse(std::ifstream &fileToRead);
 void print_parse(Parse *my_parse, int num_tab);
 void    free_parse(Parse *my_parse);
@@ -39,20 +38,8 @@ std::string getRequestInfoName(REQUEST_INFO info) {
 // ! first line 2 a un /r dedans
 std::map<REQUEST_INFO, std::string> Request_convert(char buffer[BUFFER_SIZE]) {
     std::vector<std::string> by_line = my_strsplit(buffer, '\n');
-    // by_line[0].replace('\r', ' ');
-    // by_line[0].replace('\t', ' ');
-    // std::vector<std::string> first_line = my_strsplit(by_line[0], ' ');
     std::map<REQUEST_INFO, std::string> to_return;
-
-    // if (first_line[2].size() > 2)
-    //     first_line[2].pop_back();
-    // to_return[Method] = first_line[0];
-    // to_return[Domane_Name] = first_line[1];
-    // to_return[Transfer_Protocol] = first_line[2];
-
-    // std::cout << "size of lines is " << by_line.size() << std::endl;
     for (int i = 3; i < (int)Priority; i++) {
-        // std::cout << i << std::endl;
         size_t start = by_line[i - 2].find(':') + 2;
         to_return[(REQUEST_INFO)i] = by_line[i - 2].substr(start, by_line[i - 2].size() - start);
     }
@@ -81,7 +68,6 @@ void tester_request_convert() {
 "Priority: u=1\n";
     std::map<REQUEST_INFO, std::string> temp_received;
     temp_received = Request_convert(buffer);
-    std::cout << temp_received;
 }
 
 
@@ -100,7 +86,6 @@ void simple_response(long new_socket, running_server *info) {
 
     read(new_socket, buffer, BUFFER_SIZE);
     send(new_socket, hello_message, strlen(hello_message), 0);
-    std::cout << "Hello message sent\n";    
 }
 
 // /tuct/aginore
@@ -137,17 +122,12 @@ running_server *which_open_socket(int i, std::map<int, running_server *> config_
 }
 
 
-void	print_server_info(RunningServers &active_servers) {
-	for (auto it = active_servers._servers.begin(); it != active_servers._servers.end(); ++it) {
-        int port = it->first;
-        running_server* server = it->second;
-        std::cout << port << ": with fd: " << server->_socket->getSocketFd() << " has server: ";
-        for (size_t i = 0; i < server->subdomain.size(); ++i) {
-            std::cout << server->subdomain[i].name << " = name, ";
-        }
-        std::cout << std::endl;
-    }
-}
+// void	print_server_info(RunningServers &active_servers) {
+// 	for (auto it = active_servers._servers.begin(); it != active_servers._servers.end(); ++it) {
+//         int port = it->first;
+//         running_server* server = it->second;
+//     }
+// }
 
 int main(int argc, char **argv) {
     if (argc > 2) {
@@ -160,10 +140,7 @@ int main(int argc, char **argv) {
     } else {
         active_servers = new RunningServers();
     }
-    print_server_info(*active_servers);
-
-    std::cout << "Server listening on multiple ports..." << std::endl;
-
+    // print_server_info(*active_servers);
     while (true) {
         // poll returns the number of event that have changed
         int poll_ret = poll(active_servers->_track_fds.data(), active_servers->_track_fds.size(), 3000); // 3 second time out

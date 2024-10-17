@@ -13,12 +13,9 @@ std::string make_default_error_page(int code) {
     body.append(" </title>\n<style>\nbody {\n\nfont-family: Arial, sans-serif;\nbackground-color: #f4f4f4;");
     body.append("color: #333;\ntext-align: center;\npadding: 50px;\n}\nh1 {\nfont-size: 50px;\nmargin: 0;\n}\np {\n    font-size: 20px;\n}\na {\n    text-decoration: none;\n    color: #007bff;\n}\n");
     body.append("a:hover {\n           text-decoration: underline;\n       }\n   </style>\n</head>\n<body>\n   <h1>\n");    
-        
-    // body.append(std::to_string(code));
-    // body.append(" ");
+    
     body.append(match_code(code));
     body.append("\n</body>\n</html>");
-    // std::cout << body;
     return body;
 }
 
@@ -47,12 +44,3 @@ std::string get_error_response(int code, method_type method_type, server *server
     return (header);
 }
 
-// void error_response(int client_fd) {
-//     // * make it actualy response base on curent situation 
-//     std::cout << "did go in error response \n";
-//     std::string response = get_error_response(404);
-//     send(client_fd, response.data(), response.size(), 0);
-//     std::cout << "finished error response \n";
-//     close(client_fd);
-//     std::cout << "finish closed fd \n";
-// }

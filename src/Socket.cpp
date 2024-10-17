@@ -7,7 +7,6 @@ const int BACKLOG = 10;
 
 ServerSocket::ServerSocket(int domain, int service, int protocol, int port, u_long interface) {
 	// establish connection
-	std::cout << "domain: " << domain << ", service: " << service << ", protocol: " << protocol << ", port: " << port << ", interface: " << interface << std::endl;
 	_sock_fd = socket(domain, service, protocol);
 	if (this->_sock_fd < 0) {
 		perror("failed _sock_fd");
@@ -30,7 +29,6 @@ ServerSocket::ServerSocket(int domain, int service, int protocol, int port, u_lo
 
 	
 	// serverside, so bind() (connect for client)
-	std::cout << "sock_fd: " << _sock_fd << ", address: " << &_address << ", sizeof address: " << sizeof(_address) << std::endl;
 	if (bind(_sock_fd, (struct sockaddr *)&_address, sizeof(_address)) < 0) {
         perror("bind failed");
         close(_sock_fd);

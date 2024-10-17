@@ -15,8 +15,6 @@ Request::Request() {
 Request::~Request() {}
 
 Request::Request(int n, std::string s, method_type m) {
-  std::cout << "int = " << n << ", string = " << s << ", method = " << m << std::endl;
-
   std::string met = methodTypeToString(m);
   std::string num = std::to_string(n);
   std::string content = identifyContentType(s);
