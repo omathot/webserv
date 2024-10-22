@@ -26,11 +26,14 @@ if method and method.upper() == 'DELETE' and filename:
     filename = os.path.basename(filename.strip())
 
     # Define the path to the directory where files are stored
-    file_dir = "/goinfre/sboulain/webserv/ourSite/Downloads/"
-    safe_path = os.path.join(file_dir, filename)
-
+    # start_path = "/home/omathot"
+    cwd = os.getcwd()
+    # true_cwd = os.path.join(start_path, cwd)
+    file_dir = "ourSite/Downloads/"
+    pwd_del = os.path.join(cwd, file_dir)
+    safe_path = os.path.join(pwd_del, filename)
     # Ensure that the file is within the intended directory
-    if not safe_path.startswith(file_dir):
+    if not safe_path.startswith(cwd):
         # print("Content-Type: text/html\n")
         print(f"<html><body><h2>Error: Invalid file path.</h2></body></html>")
         exit()

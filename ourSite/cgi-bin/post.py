@@ -41,8 +41,11 @@ def parse_multipart_form_data(content_type, content_length):
 
 def main():
     print("Content-Type: text/html\n")
-    
-    upload_dir = "/home/sboulain/goinfre/webserv/ourSite/Downloads"
+    cwd = os.getcwd()
+    # true_cwd = os.path.join(start_path, cwd)
+    file_dir = "ourSite/Downloads/"
+    pwd_del = os.path.join(cwd, file_dir)
+    upload_dir = os.path.join(cwd, file_dir)
     os.makedirs(upload_dir, exist_ok=True)
 
     content_type = os.environ.get('CONTENT_TYPE', '')
