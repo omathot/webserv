@@ -31,9 +31,24 @@
         <input type="submit" value="Send GET Request">
     </form> -->
     <form name="search" action="http://localhost:8070/main.com/cgi-bin/helloworld.py" method="get">
-        <!-- Search: <input type="text" name="searchbox"> -->
+        <input type="text" name="arg1" id="arg1">
+        <input type="text" name="arg2" id="arg2">
         <input type="submit" value="Submit">
         </form> 
+
+    <form name="upload" action="http://localhost:8070/main.com/cgi-bin/post.py" method="post" enctype="multipart/form-data"> <!-- changed script from helloworld.py to post.py -->
+        <label for="file">Choose file:</label>
+        <input type="file" name="file" id="file">
+        <input type="submit" value="Submit">
+    </form>
+
+
+    <form name="deletefile" action="http://localhost:8070/main.com/cgi-bin/deletefile.py" method="post">
+        <label for="filename">Enter file name to delete:</label>
+        <input type="hidden" name="_method" value="DELETE">
+        <input type="text" name="filename" id="filename" required>
+        <input type="submit" value="Delete File">
+    </form>
 
     <form action="http://localhost:8070/main.com/files/photos" method="post" enctype="multipart/form-data">
         <h2>POST Request</h2>
@@ -44,7 +59,7 @@
     </form>
     
     <form action="http://localhost:8070/main.com/files/photos" method="post">
-        <h2>DELETE Request (Simulated)</h2>
+        <h2>DELETE  (Simulated)</h2>
         <p>Note: HTML forms cannot directly make DELETE requests. This form simulates a DELETE request using POST.</p>
         <input type="hidden" name="_method" value="DELETE">
         <label for="delete-filename">Filename to Delete:</label>
@@ -52,6 +67,8 @@
         <br>
         <input type="submit" value="Send DELETE Request">
     </form>
+    
+    
     
 
 </body>

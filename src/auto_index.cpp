@@ -4,7 +4,7 @@
 #include <chrono>
 
 std::vector<std::string> get_all_server_files(std::string root);
-std::string get_error_response(int code);
+std::string get_error_response(int code, method_type method_type, server *server);
 std::vector<std::string> my_strsplit(std::string src, char delemiter);
 
 
@@ -13,14 +13,62 @@ bool exists_test (const std::string& name) {
     return f.good();
 }
 
+std::string file_time_to_string(const std::filesystem::file_time_type& file_time) {
+    // Convert file_time to system clock time_point
+    auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+        file_time - std::filesystem::file_time_type::clock::now() + 
+        std::chrono::system_clock::now());
+
+    // Convert to time_t
+    std::time_t time = std::chrono::system_clock::to_time_t(sctp);
+
+    // Convert to local time struct
+    std::tm* local_time = std::localtime(&time);
+
+    // Format as string
+    std::ostringstream oss;
+    oss << std::put_time(local_time, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
+
+// Usage example
+void process_directory_entry(const std::filesystem::directory_entry& entry) {
+    auto file_time = entry.last_write_time();
+    std::string time_str = file_time_to_string(file_time);
+}
+
+std::string molest_path(std::string domain, std::string file_name) {
+    std::string ret;
+    if (!domain.empty()) {
+        while (domain.back() == '/') {
+            domain.pop_back();
+        }
+        domain.append("/");
+        
+    }
+    if (!file_name.empty()) {
+        while (file_name.front() == '/') {
+            file_name.erase(file_name.begin());
+        }
+        // file_name.erase(remove_if(file_name.begin(), file_name.end(), [](char c) { return c == '/'; }), file_name.end());
+        ret = domain + file_name;
+    } else {
+        ret = domain;
+    }
+    return ret;
+}
+
 std::string make_hyper_link(std::string true_url, std::string file_name, std::string display) {
     std::string hyper_link = "<a href=\"";
-    hyper_link.append(true_url + "/" + file_name);
+    true_url.erase(remove_if(true_url.begin(), true_url.end(), isspace), true_url.end());
+    hyper_link.append(molest_path(true_url, file_name));
+    
     hyper_link.append("\">" + display + "</a>");
     return hyper_link;
 }
 
-std::string get_path_parrent(std::string root, std::string virtual_root, std::string true_url) {
+std::string get_path_parrent(std::string virtual_root, std::string true_url) {
     if (virtual_root.empty()  || virtual_root == "/")
         return (true_url);
     virtual_root.pop_back();
@@ -35,8 +83,8 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
         virtual_root.append(path);
     if (!exists_test(root + virtual_root))
     {
-        std::cout << root + virtual_root << std::endl;
-        return (get_error_response(500));
+        std::string temp = "X";
+        return (temp);
     }
     std::string true_url = "http://localhost:";
     true_url.append(cur_url);
@@ -49,9 +97,11 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
     // for (auto &path : all_files) {
     body.append("<tr>\n<th>Name</th>\n<th>Last modified</th>\n<th>Size</th>\n </tr>\n");
     if (!virtual_root.empty() && virtual_root != "/")
-        body.append("<tr>\n<th>" + make_hyper_link(true_url, get_path_parrent(root, virtual_root, true_url), "..") +  + "</th> </tr>\n");
+        body.append("<tr>\n<th>" + make_hyper_link(true_url, get_path_parrent(virtual_root, true_url), "..") + "</th> </tr>\n");
     for (const auto & entry : std::filesystem::directory_iterator(root + virtual_root)) {
-
+        auto file_t_time = entry.last_write_time();
+        std::string t = file_time_to_string(file_t_time);
+        
         std::string temp = "<tr>\n";
         for (size_t i = 0; i < 3; i++)
         {
@@ -59,16 +109,20 @@ std::string make_autoindex_body(std::string root, std::string path, std::string 
             temp.append("<th>\n");
             if (i == 0) {
                 if (entry.is_directory()) {
-                    temp.append(make_hyper_link(true_url + virtual_root, entry.path().filename().string(), entry.path().filename().string() + "/"));
+                    true_url.erase(remove_if(true_url.begin(), true_url.end(), isspace), true_url.end());
+                    std::string domain_n_subdomain = molest_path(true_url, virtual_root);
+                    temp.append(make_hyper_link(domain_n_subdomain, entry.path().filename().string(), entry.path().filename().string() + "/"));
                     // temp.append(entry.path().filename().string());
                     // temp.append("/");
                 } else {
-                    temp.append(make_hyper_link(true_url + virtual_root, entry.path().filename().string(), entry.path().filename().string()));
+                    true_url.erase(remove_if(true_url.begin(), true_url.end(), isspace), true_url.end());
+                    std::string domain_n_subdomain = molest_path(true_url, virtual_root);
+                    temp.append(make_hyper_link(domain_n_subdomain, entry.path().filename().string(), entry.path().filename().string()));
                 //     temp.append(entry.path().filename().string());
                 }
             } else if (i == 1) {
+                temp.append(t);
                 // std::ostringstream oss;
-                temp.append(entry.path().filename().string());
                 // oss << std::put_time((entry.last_write_time().), "%d-%m-%Y %H-%M-%S");
                 // temp.append(oss.str());
                 // temp.append(std::format("{}", ));
